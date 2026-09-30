@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VixLegen - Sistema Integrado</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700;800;900&family=Times+New+Roman&family=Georgia&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="layout-container">
+        <!-- BARRA LATERAL (SIDEBAR) -->
+        <aside class="sidebar" id="minhaSidebar">
+            <nav class="nav-icons">
+                <div class="icon-btn active" data-target="sec-editor" title="Editor de Minutas">
+                    <i class="fa-solid fa-pen"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-tarefas" title="Tarefas / Kanban">
+                    <i class="fa-solid fa-border-all"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-notificacoes" title="Central de Notificações">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="badge-count" id="badgeNotifCount">5</span>
+                </div>
+                <div class="icon-btn" data-target="sec-ia" title="Assistente Gemini IA">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-empresa" title="CompanyJUS">
+                    <i class="fa-regular fa-building"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-perfil" title="Perfil do Utilizador">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="icon-btn" id="btnSair" title="Sair da Sessão">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </div>
+            </nav>
+
+            <div class="logo">
+                <h2>VL.</h2>
+                <i class="fa-regular fa-gem diamond-icon"></i>
+                <span>VixLegen</span>
+            </div>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL -->
+        <main class="main-content">
+            <button id="btnToggle" class="toggle-btn" title="Alternar Menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <!-- SEÇÃO 1: EDITOR JURÍDICO INTEGRADO -->
+            <section id="sec-editor" class="app-section active">
+                <div class="editor-wrapper">
+                    <!-- BARRA DE FERRAMENTAS SUPERIOR -->
+                    <div class="editor-toolbar">
+                        <!-- Desfazer / Refazer -->
+                        <div class="toolbar-group">
+                            <button class="tool-btn" id="btnUndo" title="Desfazer (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="tool-btn" id="btnRedo" title="Refazer (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
+                        </div>
+
+                        <!-- Estilos e Fontes -->
+                        <div class="toolbar-group">
+                            <select id="fontFamilySelect" class="tool-select" title="Fonte do Documento">
+                                <option value="'Times New Roman', serif" selected>Times New Roman</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Courier New', monospace">Courier New</option>
+                            </select>
+                            <select id="fontSizeSelect" class="tool-select" title="Tamanho da Fonte">
+                                <option value="1">10pt</option>
+                                <option value="2">11pt</option>
+                                <option value="3" selected>12pt</option>
+                                <option value="4">14pt</option>
+                                <option value="5">18pt</option>
+                            </select>
+                        </div>
+
+                        <!-- Formatação de Texto -->
+                        <div class="toolbar-group">
+                            <button class="tool-btn" id="btnBold" title="Negrito (Ctrl+B)"><i class="fa-solid fa-bold"></i></button>
+                            <button class="tool-btn" id="btnItalic" title="Itálico (Ctrl+I)"><i class="fa-solid fa-italic"></i></button>
+                            <button class="tool-btn" id="btnUnderline" title="Sublinhado (Ctrl+U)"><i class="fa-solid fa-underline"></i></button>
+                            <button class="tool-btn" id="btnStrike" title="Tachado"><i class="fa-solid fa-strikethrough"></i></button>
+                            <div class="color-picker-wrapper" title="Cor do Texto">
+                                <i class="fa-solid fa-font"></i>
+                                <input type="color" id="textColorPicker" value="#000000">
+                            </div>
+                        </div>
+
+                        <!-- Alinhamento -->
+                        <div class="toolbar-group">
+                            <button class="tool-btn" id="btnAlignLeft" title="Alinhar à Esquerda"><i class="fa-solid fa-align-left"></i></button>
+                            <button class="tool-btn" id="btnAlignCenter" title="Centralizar"><i class="fa-solid fa-align-center"></i></button>
+                            <button class="tool-btn" id="btnAlignRight" title="Alinhar à Direita"><i class="fa-solid fa-align-right"></i></button>
+                            <button class="tool-btn active" id="btnAlignJustify" title="Justificar"><i class="fa-solid fa-align-justify"></i></button>
+                        </div>
+
+                        <!-- Listas e Espaçamento -->
+                        <div class="toolbar-group">
+                            <button class="tool-btn" id="btnUnorderedList" title="Lista com Marcadores"><i class="fa-solid fa-list-ul"></i></button>
+                            <button class="tool-btn" id="btnOrderedList" title="Lista Numerada"><i class="fa-solid fa-list-ol"></i></button>
+                            <select id="lineSpacingSelect" class="tool-select" title="Espaçamento entre Linhas">
+                                <option value="1">Linha 1.0</option>
+                                <option value="1.5" selected>Linha 1.5</option>
+                                <option value="2">Linha 2.0</option>
+                            </select>
+                        </div>
+
+                        <!-- Recursos Jurídicos Especiais -->
+                        <div class="toolbar-group">
+                            <button class="tool-btn legal-tool" id="btnLegalQuote" title="Recuo Citação Jurisprudência (4cm)"><i class="fa-solid fa-indent"></i> Citação</button>
+                            <button class="tool-btn legal-tool" id="btnFootnote" title="Inserir Nota de Rodapé"><i class="fa-solid fa-asterisk"></i> Rodapé</button>
+                            <button class="tool-btn legal-tool" id="btnInsertLink" title="Inserir Link / Jurisprudência"><i class="fa-solid fa-link"></i> Link</button>
+                            
+                            <div class="dropdown-templates">
+                                <button class="tool-btn legal-tool dropdown-trigger"><i class="fa-solid fa-file-signature"></i> Modelos <i class="fa-solid fa-caret-down"></i></button>
+                                <div class="dropdown-menu">
+                                    <a href="#" class="btn-template" data-template="peticao">Petição Inicial</a>
+                                    <a href="#" class="btn-template" data-template="contestacao">Contestação</a>
+                                    <a href="#" class="btn-template" data-template="procuracao">Procuração Ad Judicia</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Título e Ações -->
+                        <div class="toolbar-right">
+                            <input type="text" id="docTitle" class="doc-title-input" value="Processo_0001234-88_PeticaoInicial.docx" placeholder="Nome do documento...">
+                            <button class="tool-action-btn" id="btnSalvarMinuta"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                            <button class="tool-action-btn pdf-btn" id="btnExportPDF"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
+                        </div>
+                    </div>
+
+                    <!-- CONTAINER DA FOLHA A4 -->
+                    <div class="document-container" id="documentContainer">
+                        <!-- Régua do Topo -->
+                        <div class="ruler">
+                            <div class="ruler-ticks"></div>
+                        </div>
+
+                        <!-- FOLHA A4 EDITÁVEL -->
+                        <div class="paper-page" contenteditable="true" id="paperEditor" spellcheck="true">
+                            <h2 style="text-align: center; font-weight: bold; margin-bottom: 25px;">EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA 2ª VARA CÍVEL DA COMARCA DE SÃO PAULO - SP</h2>
+                            
+                            <p style="margin-bottom: 18px;"><strong>PROCESSO Nº:</strong> 0001234-88.2026.8.26.0100</p>
+                            <p style="margin-bottom: 18px;"><strong>REQUERENTE:</strong> COMPANYJUS SERVIÇOS DE TECNOLOGIA LTDA.</p>
+                            <p style="margin-bottom: 25px;"><strong>REQUERIDO:</strong> ASSOCIADOS E DEMAIS PARTES</p>
+                            
+                            <p style="text-align: center; font-weight: bold; margin-bottom: 25px; text-transform: uppercase;">AÇÃO DE COBRANÇA C/C INDENIZAÇÃO POR DANOS MORAIS</p>
+                            
+                            <p style="margin-bottom: 18px;"><strong>COMPANYJUS SERVIÇOS DE TECNOLOGIA LTDA.</strong>, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº 45.678.910/0001-23, com sede na Av. das Nações Unidas, 12901, Cj. 801, Brooklin, São Paulo - SP, por seu advogado infra-assinado, vem, respeitosamente, à presença de Vossa Excelência, propor a presente ação com fulcro na legislação vigente.</p>
+                            
+                            <h3 style="font-weight: bold; margin-top: 25px; margin-bottom: 15px;">I. DOS FATOS</h3>
+                            <p style="margin-bottom: 18px;">A Requerente celebrou contrato de prestação de serviços técnicos jurídicos com a parte Requerida, comprometendo-se a fornecer soluções avançadas de auditoria contratual e inteligência jurídica.</p>
+
+                            <!-- Bloco de Citação Jurisprudencial -->
+                            <blockquote class="legal-quote" style="margin-left: 4cm; font-size: 10pt; line-height: 1.2; margin-top: 15px; margin-bottom: 15px; font-style: italic; border-left: 3px solid #883942; padding-left: 10px;">
+                                "O inadimplemento da obrigação, positiva e líquida, no seu termo, constitui de pleno direito em mora o devedor. Cabível a reparação integral dos prejuízos causados comprovadamente no âmbito das relações contratuais executadas." (STJ - REsp 1.234.567/SP)
+                            </blockquote>
+
+                            <h3 style="font-weight: bold; margin-top: 25px; margin-bottom: 15px;">II. DO DIREITO</h3>
+                            <p style="margin-bottom: 18px;">O direito do Requerente encontra respaldo no Código Civil Brasileiro, bem como na sólida jurisprudência dos Tribunais Superiores, restando inequívoca a obrigação de reparação dos prejuízos suportados.</p>
+
+                            <h3 style="font-weight: bold; margin-top: 25px; margin-bottom: 15px;">III. DOS PEDIDOS</h3>
+                            <p style="margin-bottom: 10px;">Diante do exposto, requer a Vossa Excelência:</p>
+                            <ol style="margin-left: 20px; margin-bottom: 25px;">
+                                <li style="margin-bottom: 8px;">A citação da parte Requerida para, querendo, apresentar contestação no prazo legal;</li>
+                                <li style="margin-bottom: 8px;">A procedência total dos pedidos formulados na inicial, condenando o Requerido ao pagamento dos valores corrigidos;</li>
+                                <li style="margin-bottom: 8px;">A condenação em custas processuais e honorários advocatícios sucumbenciais.</li>
+                            </ol>
+
+                            <p style="text-align: right; margin-top: 40px;">Nestes termos,<br>Pede deferimento.</p>
+                            <p style="text-align: right; margin-top: 20px;">São Paulo - SP, 25 de Setembro de 2026.<br><br><strong>Dr. Mário Silva</strong><br>OAB/SP 123.456</p>
+                        </div>
+
+                        <!-- Rodapé de Métricas do Documento -->
+                        <div class="editor-footer-metrics">
+                            <span id="wordCount">Palavras: 0</span>
+                            <span id="charCount">Carateres: 0</span>
+                            <span>Página 1 de 1</span>
+                            <span style="color: #2ecc71;"><i class="fa-solid fa-cloud-arrow-up"></i> Alterações Guardadas</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 2: QUADRO KANBAN -->
+            <section id="sec-tarefas" class="app-section" style="display: none;">
+                <header class="header">
+                    <h1 class="page-title">Tarefas</h1>
+                    <button id="btnNovaTarefa" class="add-btn">
+                        <i class="fa-solid fa-plus"></i> Nova Tarefa
+                    </button>
+                </header>
+
+                <div class="kanban-board">
+                    <div class="column">
+                        <h2 class="column-title">A Fazer</h2>
+                        <div class="cards-container">
+                            <div class="card">
+                                <div class="card-content">
+                                    <h3>Análise do Contrato X</h3>
+                                    <p>Prazo: 04/09/2026</p>
+                                    <span class="status-dot dot-yellow"></span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down chevron" title="Mover tarefa"></i>
+                            </div>
+                            <div class="card">
+                                <div class="card-content">
+                                    <h3>Elaboração de Procuração</h3>
+                                    <p>Prazo: 08/09/2026</p>
+                                    <span class="status-dot dot-yellow"></span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down chevron" title="Mover tarefa"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column">
+                        <h2 class="column-title">Em Progresso</h2>
+                        <div class="cards-container">
+                            <div class="card">
+                                <div class="card-content">
+                                    <h3>Revisão Notificação Extrajudicial</h3>
+                                    <p>Prazo: 12/09/2026</p>
+                                    <span class="status-dot dot-yellow"></span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down chevron" title="Mover tarefa"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column">
+                        <h2 class="column-title">Feito</h2>
+                        <div class="cards-container">
+                            <div class="card">
+                                <div class="card-content">
+                                    <h3>Abertura de Empresa CompanyJUS</h3>
+                                    <p>Prazo: 01/09/2026</p>
+                                    <span class="status-dot dot-green"></span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down chevron" title="Mover tarefa"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 3: NOTIFICAÇÕES -->
+            <section id="sec-notificacoes" class="app-section" style="display: none;">
+                <div class="notifications-page">
+                    <header class="notifications-header">
+                        <div>
+                            <span class="section-eyebrow">CENTRAL OPERACIONAL</span>
+                            <h1 class="page-title notifications-title">Notificações</h1>
+                            <p class="notifications-subtitle">Prazos, tarefas e movimentações importantes do escritório em um só lugar.</p>
+                        </div>
+                        <button class="notif-read-all" id="btnMarcarTodasLidas" type="button">
+                            <i class="fa-solid fa-check-double"></i>
+                            Marcar todas como lidas
+                        </button>
+                    </header>
+
+                    <div class="notifications-summary">
+                        <div class="summary-item">
+                            <span class="summary-label">Não lidas</span>
+                            <strong id="notifUnreadCount">3</strong>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-item">
+                            <span class="summary-label">Prazos críticos</span>
+                            <strong>1</strong>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-item">
+                            <span class="summary-label">Atualizações hoje</span>
+                            <strong>5</strong>
+                        </div>
+                    </div>
+
+                    <div class="notifications-toolbar" aria-label="Filtros de notificações">
+                        <button class="notif-filter active" type="button" data-filter="all">Todas</button>
+                        <button class="notif-filter" type="button" data-filter="prazo">Prazos</button>
+                        <button class="notif-filter" type="button" data-filter="tarefa">Tarefas</button>
+                        <button class="notif-filter" type="button" data-filter="processo">Processos</button>
+                        <button class="notif-filter" type="button" data-filter="documento">Documentos</button>
+                    </div>
+
+                    <div class="notifications-container" id="notificationsList">
+                        <article class="notification-item unread priority-high" data-type="prazo">
+                            <div class="notif-accent"></div>
+                            <div class="notif-symbol danger"><i class="fa-solid fa-hourglass-half"></i></div>
+                            <div class="notif-main">
+                                <div class="notif-heading-row">
+                                    <span class="notif-category">Prazo processual</span>
+                                    <span class="notif-unread-dot" title="Não lida"></span>
+                                </div>
+                                <h3>Prazo de manifestação vence em 2 dias</h3>
+                                <p>Processo 0001234-88.2026.8.26.0100 • CompanyJUS x Associados</p>
+                                <div class="notif-meta">
+                                    <span><i class="fa-regular fa-clock"></i> Hoje, 14:32</span>
+                                    <span class="deadline critical"><i class="fa-regular fa-calendar"></i> 02/10/2026</span>
+                                </div>
+                            </div>
+                            <div class="notif-actions">
+                                <button class="notif-action primary" type="button">Ver processo</button>
+                                <button class="notif-icon-btn mark-read" type="button" title="Marcar como lida"><i class="fa-regular fa-circle-check"></i></button>
+                            </div>
+                        </article>
+
+                        <article class="notification-item unread priority-medium" data-type="tarefa">
+                            <div class="notif-accent"></div>
+                            <div class="notif-symbol task"><i class="fa-solid fa-list-check"></i></div>
+                            <div class="notif-main">
+                                <div class="notif-heading-row">
+                                    <span class="notif-category">Nova tarefa</span>
+                                    <span class="notif-unread-dot" title="Não lida"></span>
+                                </div>
+                                <h3>Revisar minuta de contrato societário</h3>
+                                <p>Uma nova tarefa foi atribuída a você na área de Direito Empresarial.</p>
+                                <div class="notif-meta">
+                                    <span><i class="fa-regular fa-clock"></i> Hoje, 11:08</span>
+                                    <span class="deadline"><i class="fa-regular fa-calendar"></i> Até 06/10/2026</span>
+                                </div>
+                            </div>
+                            <div class="notif-actions">
+                                <button class="notif-action" type="button">Abrir tarefa</button>
+                                <button class="notif-icon-btn mark-read" type="button" title="Marcar como lida"><i class="fa-regular fa-circle-check"></i></button>
+                            </div>
+                        </article>
+
+                        <article class="notification-item unread" data-type="processo">
+                            <div class="notif-accent"></div>
+                            <div class="notif-symbol process"><i class="fa-solid fa-scale-balanced"></i></div>
+                            <div class="notif-main">
+                                <div class="notif-heading-row">
+                                    <span class="notif-category">Movimentação processual</span>
+                                    <span class="notif-unread-dot" title="Não lida"></span>
+                                </div>
+                                <h3>Nova decisão publicada no processo</h3>
+                                <p>O tribunal registrou uma nova movimentação. Consulte o andamento para conferir os detalhes.</p>
+                                <div class="notif-meta">
+                                    <span><i class="fa-regular fa-clock"></i> Hoje, 09:41</span>
+                                    <span><i class="fa-solid fa-building-columns"></i> TJSP</span>
+                                </div>
+                            </div>
+                            <div class="notif-actions">
+                                <button class="notif-action" type="button">Ver andamento</button>
+                                <button class="notif-icon-btn mark-read" type="button" title="Marcar como lida"><i class="fa-regular fa-circle-check"></i></button>
+                            </div>
+                        </article>
+
+                        <article class="notification-item" data-type="documento">
+                            <div class="notif-accent"></div>
+                            <div class="notif-symbol document"><i class="fa-solid fa-file-signature"></i></div>
+                            <div class="notif-main">
+                                <div class="notif-heading-row">
+                                    <span class="notif-category">Documento</span>
+                                </div>
+                                <h3>Procuração assinada pelo cliente</h3>
+                                <p>O documento “Procuração Ad Judicia” foi assinado e está disponível no processo.</p>
+                                <div class="notif-meta">
+                                    <span><i class="fa-regular fa-clock"></i> Ontem, 17:26</span>
+                                </div>
+                            </div>
+                            <div class="notif-actions">
+                                <button class="notif-action" type="button">Abrir documento</button>
+                            </div>
+                        </article>
+
+                        <article class="notification-item" data-type="processo">
+                            <div class="notif-accent"></div>
+                            <div class="notif-symbol success"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="notif-main">
+                                <div class="notif-heading-row">
+                                    <span class="notif-category">Processo concluído</span>
+                                </div>
+                                <h3>Processo marcado como finalizado</h3>
+                                <p>Todos os itens vinculados foram concluídos e o processo foi movido para o histórico.</p>
+                                <div class="notif-meta">
+                                    <span><i class="fa-regular fa-clock"></i> 28/09/2026, 16:04</span>
+                                </div>
+                            </div>
+                            <div class="notif-actions">
+                                <button class="notif-action" type="button">Ver histórico</button>
+                            </div>
+                        </article>
+
+                        <div class="notifications-empty" id="notificationsEmpty" hidden>
+                            <i class="fa-regular fa-bell-slash"></i>
+                            <strong>Nenhuma notificação nesta categoria</strong>
+                            <span>Tente selecionar outro filtro.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 4: EMPRESA (COMPANYJUS) -->
+            <section id="sec-empresa" class="app-section" style="display: none;">
+                <div class="entity-page company-page">
+                    <header class="entity-page-header">
+                        <div>
+                            <span class="section-eyebrow">ORGANIZAÇÃO VINCULADA</span>
+                            <h1 class="page-title entity-title">Empresa</h1>
+                            <p>Dados cadastrais e canais oficiais vinculados ao ambiente VixLegen.</p>
+                        </div>
+                        <button id="btnEditarEmpresa" class="entity-primary-action" type="button">
+                            <i class="fa-solid fa-pen"></i> Editar dados
+                        </button>
+                    </header>
+
+                    <div class="company-overview-card">
+                        <div class="company-overview-main">
+                            <div class="company-mark" aria-hidden="true">
+                                <i class="fa-solid fa-building-columns"></i>
+                            </div>
+                            <div class="company-heading">
+                                <div class="entity-status"><span></span> Cadastro ativo</div>
+                                <h2 id="displayNomeEmpresa">CompanyJUS</h2>
+                                <p id="fieldRazao">CompanyJUS Serviços de Tecnologia e Soluções Jurídicas Ltda.</p>
+                            </div>
+                        </div>
+                        <div class="company-registration">
+                            <span>CNPJ</span>
+                            <strong id="fieldCnpj">45.678.910/0001-23</strong>
+                        </div>
+                    </div>
+
+                    <div class="entity-content-grid company-content-grid">
+                        <section class="entity-panel">
+                            <div class="entity-panel-heading">
+                                <div>
+                                    <span class="panel-kicker">CONTATO</span>
+                                    <h3>Canais corporativos</h3>
+                                </div>
+                                <i class="fa-regular fa-address-card"></i>
+                            </div>
+
+                            <div class="entity-detail-list">
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-regular fa-envelope"></i></div>
+                                    <div>
+                                        <span>E-mail corporativo</span>
+                                        <strong id="fieldEmail">contato@companyjus.com.br</strong>
+                                    </div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-phone"></i></div>
+                                    <div>
+                                        <span>Telefone</span>
+                                        <strong id="fieldTelefone">(11) 3040-5060</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="entity-panel">
+                            <div class="entity-panel-heading">
+                                <div>
+                                    <span class="panel-kicker">LOCALIZAÇÃO</span>
+                                    <h3>Endereço cadastrado</h3>
+                                </div>
+                                <i class="fa-regular fa-map"></i>
+                            </div>
+                            <div class="company-address-block">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <p id="fieldEndereco">Av. das Nações Unidas, 12901, Cj. 801<br>Brooklin, São Paulo - SP, CEP 04578-000</p>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="entity-footer-strip">
+                        <div>
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span><strong>Dados institucionais</strong> usados nos documentos e cadastros do sistema.</span>
+                        </div>
+                        <button class="entity-link-action" type="button" data-go-section="sec-perfil">
+                            Ver perfil profissional <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 5: ASSISTENTE IA -->
+            <section id="sec-ia" class="app-section" style="display: none;">
+                <header class="header">
+                    <h1 class="page-title">Assistente Jurídico IA</h1>
+                </header>
+                <div class="chat-box">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-msg ai">
+                            <i class="fa-solid fa-robot"></i>
+                            <p>Olá! Sou o assistente VixLegen IA. Como posso ajudar nas tuas minutas ou pesquisas jurídicas hoje?</p>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chatInput" placeholder="Faça uma pergunta sobre prazos, legislação ou contratos...">
+                        <button id="btnEnviarChat" class="add-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 6: PERFIL -->
+            <section id="sec-perfil" class="app-section" style="display: none;">
+                <div class="entity-page profile-page">
+                    <header class="entity-page-header">
+                        <div>
+                            <span class="section-eyebrow">CONTA PROFISSIONAL</span>
+                            <h1 class="page-title entity-title">Perfil profissional</h1>
+                            <p>Informações de identificação e atuação vinculadas à sua conta.</p>
+                        </div>
+                    </header>
+
+                    <div class="profile-hero-card">
+                        <div class="profile-avatar-large">
+                            <span>MS</span>
+                        </div>
+                        <div class="profile-identity">
+                            <div class="entity-status"><span></span> Perfil ativo</div>
+                            <h2>Dr. Mário Silva</h2>
+                            <p>Advogado Associado</p>
+                            <div class="profile-tags">
+                                <span><i class="fa-solid fa-scale-balanced"></i> OAB/SP 123.456</span>
+                                <span><i class="fa-solid fa-briefcase"></i> Direito Empresarial &amp; Societário</span>
+                            </div>
+                        </div>
+                        <div class="profile-company-link">
+                            <span>Empresa vinculada</span>
+                            <strong>CompanyJUS</strong>
+                            <button type="button" data-go-section="sec-empresa">Abrir empresa <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="entity-content-grid profile-content-grid">
+                        <section class="entity-panel">
+                            <div class="entity-panel-heading">
+                                <div>
+                                    <span class="panel-kicker">IDENTIFICAÇÃO</span>
+                                    <h3>Dados profissionais</h3>
+                                </div>
+                                <i class="fa-regular fa-id-badge"></i>
+                            </div>
+                            <div class="entity-detail-list">
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-user-tie"></i></div>
+                                    <div><span>Cargo</span><strong>Advogado Associado</strong></div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                                    <div><span>Registro profissional</span><strong>OAB/SP 123.456</strong></div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="entity-panel">
+                            <div class="entity-panel-heading">
+                                <div>
+                                    <span class="panel-kicker">CONTATO</span>
+                                    <h3>Conta e comunicação</h3>
+                                </div>
+                                <i class="fa-regular fa-envelope"></i>
+                            </div>
+                            <div class="entity-detail-list">
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-regular fa-envelope"></i></div>
+                                    <div><span>E-mail profissional</span><strong>mario.silva@vixlegen.com</strong></div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-building"></i></div>
+                                    <div><span>Organização</span><strong>CompanyJUS</strong></div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="entity-panel profile-specialty-panel">
+                            <div class="entity-panel-heading">
+                                <div>
+                                    <span class="panel-kicker">ATUAÇÃO</span>
+                                    <h3>Área de especialidade</h3>
+                                </div>
+                                <i class="fa-solid fa-book-open"></i>
+                            </div>
+                            <div class="specialty-highlight">
+                                <i class="fa-solid fa-briefcase"></i>
+                                <div>
+                                    <strong>Direito Empresarial &amp; Societário</strong>
+                                    <span>Área principal cadastrada no perfil profissional.</span>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="entity-footer-strip">
+                        <div>
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>Esses dados identificam o profissional nas áreas internas do VixLegen.</span>
+                        </div>
+                        <button class="entity-link-action" type="button" data-go-section="sec-notificacoes">
+                            Abrir notificações <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SISTEMA DE MODAIS CUSTOMIZADOS -->
+    <div id="modalOverlay" class="modal-overlay">
+        
+        <!-- MODAL 1: NOVA TAREFA -->
+        <div id="modalNovaTarefa" class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-plus-circle"></i> Criar Nova Tarefa</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label>Título da Tarefa</label>
+                <input type="text" id="inputTituloTarefa" placeholder="Ex: Elaborar Recurso Especial...">
+                
+                <label>Data Limite / Prazo</label>
+                <input type="text" id="inputPrazoTarefa" placeholder="Ex: 15/10/2026">
+                
+                <label>Coluna Inicial</label>
+                <select id="selectColunaTarefa">
+                    <option value="0">A Fazer</option>
+                    <option value="1">Em Progresso</option>
+                    <option value="2">Feito</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="btnCancelarTarefa">Cancelar</button>
+                <button class="modal-btn confirm" id="btnConfirmarTarefa">Adicionar Tarefa</button>
+            </div>
+        </div>
+
+        <!-- MODAL 2: EDITAR EMPRESA -->
+        <div id="modalEditarEmpresa" class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen-to-square"></i> Editar Dados da Empresa</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label>E-mail Corporativo</label>
+                <input type="email" id="inputEmailEmpresa">
+                
+                <label>Telefone</label>
+                <input type="text" id="inputTelefoneEmpresa">
+                
+                <label>Endereço Completo</label>
+                <textarea id="inputEnderecoEmpresa" rows="3"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="btnCancelarEmpresa">Cancelar</button>
+                <button class="modal-btn confirm" id="btnSalvarEmpresa">Salvar Alterações</button>
+            </div>
+        </div>
+
+        <!-- MODAL 3: CONFIRMAR SAIR -->
+        <div id="modalSair" class="modal-card modal-small">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-arrow-right-from-bracket"></i> Terminar Sessão</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Tens a certeza de que pretendes encerrar a tua sessão no <strong>VixLegen</strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="btnCancelarSair">Não, Ficar</button>
+                <button class="modal-btn danger" id="btnConfirmarSair">Sim, Sair</button>
+            </div>
+        </div>
+
+        <!-- MODAL 4: AVISO / SUCESSO -->
+        <div id="modalAlerta" class="modal-card modal-small">
+            <div class="modal-header">
+                <h3 id="alertaTitulo"><i class="fa-solid fa-circle-check"></i> Sucesso</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body text-center">
+                <p id="alertaMensagem">Ação executada com sucesso!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn confirm" id="btnFecharAlerta">Entendido</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
