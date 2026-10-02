@@ -288,62 +288,56 @@
 
             <!-- SEÇÃO 2: QUADRO KANBAN -->
             <section id="sec-tarefas" class="app-section" style="display: none;">
-                <header class="header">
-                    <h1 class="page-title">Tarefas</h1>
-                    <button id="btnNovaTarefa" class="add-btn">
-                        <i class="fa-solid fa-plus"></i> Nova Tarefa
-                    </button>
-                </header>
-
-                <div class="kanban-board">
-                    <div class="column">
-                        <h2 class="column-title">A Fazer</h2>
-                        <div class="cards-container">
-                            <div class="card">
-                                <div class="card-content">
-                                    <h3>Análise do Contrato X</h3>
-                                    <p>Prazo: 04/09/2026</p>
-                                    <span class="status-dot dot-yellow"></span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down chevron" title="Mover tarefa"></i>
-                            </div>
-                            <div class="card">
-                                <div class="card-content">
-                                    <h3>Elaboração de Procuração</h3>
-                                    <p>Prazo: 08/09/2026</p>
-                                    <span class="status-dot dot-yellow"></span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down chevron" title="Mover tarefa"></i>
-                            </div>
+                <div class="kanban-page">
+                    <header class="records-header kanban-header">
+                        <div>
+                            <span class="section-eyebrow">ORGANIZAÇÃO DE DEMANDAS</span>
+                            <h1 class="page-title">Tarefas</h1>
+                            <p>Arraste os cards entre as colunas, edite detalhes e acompanhe prioridades.</p>
                         </div>
+                        <button id="btnNovaTarefa" class="add-btn" type="button">
+                            <i class="fa-solid fa-plus"></i> Novo Card
+                        </button>
+                    </header>
+
+                    <div class="kanban-toolbar">
+                        <div class="records-search">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input id="buscaTarefas" type="search" placeholder="Buscar tarefa, processo ou descrição...">
+                        </div>
+                        <select id="filtroPrioridadeTarefa" class="records-filter">
+                            <option value="">Todas as prioridades</option>
+                            <option value="URGENTE">Urgente</option>
+                            <option value="ALTA">Alta</option>
+                            <option value="MEDIA">Média</option>
+                            <option value="BAIXA">Baixa</option>
+                        </select>
                     </div>
 
-                    <div class="column">
-                        <h2 class="column-title">Em Progresso</h2>
-                        <div class="cards-container">
-                            <div class="card">
-                                <div class="card-content">
-                                    <h3>Revisão Notificação Extrajudicial</h3>
-                                    <p>Prazo: 12/09/2026</p>
-                                    <span class="status-dot dot-yellow"></span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down chevron" title="Mover tarefa"></i>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="kanban-board" id="kanbanBoard">
+                        <section class="kanban-column" data-status="PENDENTE">
+                            <header class="kanban-column-header">
+                                <div><span class="kanban-dot pending"></span><h2>A Fazer</h2></div>
+                                <span class="kanban-count" id="countPendente">0</span>
+                            </header>
+                            <div class="cards-container kanban-dropzone" id="kanbanPendente" data-status="PENDENTE"></div>
+                        </section>
 
-                    <div class="column">
-                        <h2 class="column-title">Feito</h2>
-                        <div class="cards-container">
-                            <div class="card">
-                                <div class="card-content">
-                                    <h3>Abertura de Empresa CompanyJUS</h3>
-                                    <p>Prazo: 01/09/2026</p>
-                                    <span class="status-dot dot-green"></span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down chevron" title="Mover tarefa"></i>
-                            </div>
-                        </div>
+                        <section class="kanban-column" data-status="EM_ANDAMENTO">
+                            <header class="kanban-column-header">
+                                <div><span class="kanban-dot progress"></span><h2>Em Progresso</h2></div>
+                                <span class="kanban-count" id="countAndamento">0</span>
+                            </header>
+                            <div class="cards-container kanban-dropzone" id="kanbanAndamento" data-status="EM_ANDAMENTO"></div>
+                        </section>
+
+                        <section class="kanban-column" data-status="CONCLUIDA">
+                            <header class="kanban-column-header">
+                                <div><span class="kanban-dot done"></span><h2>Feito</h2></div>
+                                <span class="kanban-count" id="countConcluida">0</span>
+                            </header>
+                            <div class="cards-container kanban-dropzone" id="kanbanConcluida" data-status="CONCLUIDA"></div>
+                        </section>
                     </div>
                 </div>
             </section>
@@ -722,29 +716,64 @@
     <!-- SISTEMA DE MODAIS CUSTOMIZADOS -->
     <div id="modalOverlay" class="modal-overlay">
         
-        <!-- MODAL 1: NOVA TAREFA -->
-        <div id="modalNovaTarefa" class="modal-card">
+        <!-- MODAL: CRIAR / EDITAR TAREFA -->
+        <div id="modalNovaTarefa" class="modal-card modal-wide">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-plus-circle"></i> Criar Nova Tarefa</h3>
+                <h3 id="tituloModalTarefa"><i class="fa-solid fa-note-sticky"></i> Novo Card</h3>
                 <button class="modal-close">&times;</button>
             </div>
-            <div class="modal-body">
-                <label>Título da Tarefa</label>
-                <input type="text" id="inputTituloTarefa" placeholder="Ex: Elaborar Recurso Especial...">
-                
-                <label>Data Limite / Prazo</label>
-                <input type="text" id="inputPrazoTarefa" placeholder="Ex: 15/10/2026">
-                
-                <label>Coluna Inicial</label>
-                <select id="selectColunaTarefa">
-                    <option value="0">A Fazer</option>
-                    <option value="1">Em Progresso</option>
-                    <option value="2">Feito</option>
-                </select>
+            <div class="modal-body form-grid">
+                <input type="hidden" id="tarefaIdEdicao">
+
+                <div class="form-field wide">
+                    <label>Título</label>
+                    <input type="text" id="inputTituloTarefa" placeholder="Ex: Elaborar recurso especial">
+                </div>
+
+                <div class="form-field wide">
+                    <label>Descrição</label>
+                    <textarea id="inputDescricaoTarefa" rows="4" placeholder="Adicione contexto, observações ou instruções..."></textarea>
+                </div>
+
+                <div class="form-field">
+                    <label>Prazo</label>
+                    <input type="datetime-local" id="inputPrazoTarefa">
+                </div>
+
+                <div class="form-field">
+                    <label>Prioridade</label>
+                    <select id="selectPrioridadeTarefa">
+                        <option value="BAIXA">Baixa</option>
+                        <option value="MEDIA" selected>Média</option>
+                        <option value="ALTA">Alta</option>
+                        <option value="URGENTE">Urgente</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Status</label>
+                    <select id="selectStatusTarefa">
+                        <option value="PENDENTE">A Fazer</option>
+                        <option value="EM_ANDAMENTO">Em Progresso</option>
+                        <option value="CONCLUIDA">Feito</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Processo</label>
+                    <select id="selectProcessoTarefa">
+                        <option value="">Selecione um processo</option>
+                    </select>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button class="modal-btn cancel" id="btnCancelarTarefa">Cancelar</button>
-                <button class="modal-btn confirm" id="btnConfirmarTarefa">Adicionar Tarefa</button>
+            <div class="modal-footer task-modal-footer">
+                <button class="modal-btn danger task-delete-hidden" id="btnExcluirTarefa" type="button">
+                    <i class="fa-regular fa-trash-can"></i> Excluir
+                </button>
+                <div class="task-modal-actions">
+                    <button class="modal-btn cancel" id="btnCancelarTarefa" type="button">Cancelar</button>
+                    <button class="modal-btn confirm" id="btnConfirmarTarefa" type="button">Salvar Card</button>
+                </div>
             </div>
         </div>
 
