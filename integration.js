@@ -122,6 +122,18 @@ document.addEventListener("DOMContentLoaded", () => {
         answerConfirmation(false);
     });
 
+    $("modalOverlay")?.addEventListener("click", event => {
+        if (event.target === $("modalOverlay")) {
+            closeModals();
+        }
+    }, true);
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && $("modalOverlay")?.classList.contains("active")) {
+            closeModals();
+        }
+    });
+
     function alertModal(title, message) {
         if ($("alertaTitulo")) $("alertaTitulo").innerHTML = `<i class="fa-solid fa-circle-info"></i> ${escapeHtml(title)}`;
         if ($("alertaMensagem")) $("alertaMensagem").textContent = message;
