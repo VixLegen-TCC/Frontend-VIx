@@ -504,10 +504,10 @@
                         <div>
                             <span class="section-eyebrow">ORGANIZAÇÃO VINCULADA</span>
                             <h1 class="page-title entity-title">Empresa</h1>
-                            <p>Dados cadastrais e canais oficiais vinculados ao ambiente VixLegen.</p>
+                            <p>Informações da organização informada no seu cadastro profissional.</p>
                         </div>
-                        <button id="btnEditarEmpresa" class="entity-primary-action" type="button">
-                            <i class="fa-solid fa-pen"></i> Editar dados
+                        <button id="btnVerMaisEmpresa" class="entity-primary-action" type="button">
+                            <i class="fa-regular fa-eye"></i> Ver mais
                         </button>
                     </header>
 
@@ -517,14 +517,14 @@
                                 <i class="fa-solid fa-building-columns"></i>
                             </div>
                             <div class="company-heading">
-                                <div class="entity-status"><span></span> Cadastro ativo</div>
-                                <h2 id="displayNomeEmpresa">CompanyJUS</h2>
-                                <p id="fieldRazao">CompanyJUS Serviços de Tecnologia e Soluções Jurídicas Ltda.</p>
+                                <div class="entity-status"><span></span> Empresa vinculada ao perfil</div>
+                                <h2 id="displayNomeEmpresa">Carregando...</h2>
+                                <p id="fieldRazao">Dados provenientes do cadastro do profissional.</p>
                             </div>
                         </div>
                         <div class="company-registration">
-                            <span>CNPJ</span>
-                            <strong id="fieldCnpj">45.678.910/0001-23</strong>
+                            <span>Responsável</span>
+                            <strong id="fieldEmpresaResponsavel">—</strong>
                         </div>
                     </div>
 
@@ -533,24 +533,23 @@
                             <div class="entity-panel-heading">
                                 <div>
                                     <span class="panel-kicker">CONTATO</span>
-                                    <h3>Canais corporativos</h3>
+                                    <h3>Contato vinculado</h3>
                                 </div>
                                 <i class="fa-regular fa-address-card"></i>
                             </div>
-
                             <div class="entity-detail-list">
                                 <div class="entity-detail-row">
                                     <div class="detail-icon"><i class="fa-regular fa-envelope"></i></div>
                                     <div>
-                                        <span>E-mail corporativo</span>
-                                        <strong id="fieldEmail">contato@companyjus.com.br</strong>
+                                        <span>E-mail do responsável</span>
+                                        <strong id="fieldEmail">—</strong>
                                     </div>
                                 </div>
                                 <div class="entity-detail-row">
                                     <div class="detail-icon"><i class="fa-solid fa-phone"></i></div>
                                     <div>
                                         <span>Telefone</span>
-                                        <strong id="fieldTelefone">(11) 3040-5060</strong>
+                                        <strong id="fieldTelefone">—</strong>
                                     </div>
                                 </div>
                             </div>
@@ -560,21 +559,21 @@
                             <div class="entity-panel-heading">
                                 <div>
                                     <span class="panel-kicker">LOCALIZAÇÃO</span>
-                                    <h3>Endereço cadastrado</h3>
+                                    <h3>Localização cadastrada</h3>
                                 </div>
                                 <i class="fa-regular fa-map"></i>
                             </div>
                             <div class="company-address-block">
                                 <i class="fa-solid fa-location-dot"></i>
-                                <p id="fieldEndereco">Av. das Nações Unidas, 12901, Cj. 801<br>Brooklin, São Paulo - SP, CEP 04578-000</p>
+                                <p id="fieldEndereco">—</p>
                             </div>
                         </section>
                     </div>
 
                     <div class="entity-footer-strip">
                         <div>
-                            <i class="fa-solid fa-shield-halved"></i>
-                            <span><strong>Dados institucionais</strong> usados nos documentos e cadastros do sistema.</span>
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>O backend atual armazena o nome da empresa no cadastro do usuário; CNPJ e endereço completo ainda não fazem parte desse modelo.</span>
                         </div>
                         <button class="entity-link-action" type="button" data-go-section="sec-perfil">
                             Ver perfil profissional <i class="fa-solid fa-arrow-right"></i>
@@ -609,26 +608,29 @@
                         <div>
                             <span class="section-eyebrow">CONTA PROFISSIONAL</span>
                             <h1 class="page-title entity-title">Perfil profissional</h1>
-                            <p>Informações de identificação e atuação vinculadas à sua conta.</p>
+                            <p>Informações reais do usuário autenticado no VixLegen.</p>
                         </div>
+                        <button id="btnVerMaisPerfil" class="entity-primary-action" type="button">
+                            <i class="fa-regular fa-eye"></i> Ver mais
+                        </button>
                     </header>
 
                     <div class="profile-hero-card">
                         <div class="profile-avatar-large">
-                            <span>MS</span>
+                            <span id="perfilIniciais">VL</span>
                         </div>
                         <div class="profile-identity">
                             <div class="entity-status"><span></span> Perfil ativo</div>
-                            <h2>Dr. Mário Silva</h2>
-                            <p>Advogado Associado</p>
+                            <h2 id="perfilNome">Carregando...</h2>
+                            <p id="perfilCategoria">Profissional VixLegen</p>
                             <div class="profile-tags">
-                                <span><i class="fa-solid fa-scale-balanced"></i> OAB/SP 123.456</span>
-                                <span><i class="fa-solid fa-briefcase"></i> Direito Empresarial &amp; Societário</span>
+                                <span><i class="fa-solid fa-scale-balanced"></i> <span id="perfilOab">OAB —</span></span>
+                                <span><i class="fa-solid fa-building"></i> <span id="perfilEmpresaTag">Empresa —</span></span>
                             </div>
                         </div>
                         <div class="profile-company-link">
                             <span>Empresa vinculada</span>
-                            <strong>CompanyJUS</strong>
+                            <strong id="perfilEmpresa">—</strong>
                             <button type="button" data-go-section="sec-empresa">Abrir empresa <i class="fa-solid fa-arrow-right"></i></button>
                         </div>
                     </div>
@@ -644,12 +646,16 @@
                             </div>
                             <div class="entity-detail-list">
                                 <div class="entity-detail-row">
-                                    <div class="detail-icon"><i class="fa-solid fa-user-tie"></i></div>
-                                    <div><span>Cargo</span><strong>Advogado Associado</strong></div>
+                                    <div class="detail-icon"><i class="fa-solid fa-user"></i></div>
+                                    <div><span>Nome completo</span><strong id="perfilNomeCompleto">—</strong></div>
                                 </div>
                                 <div class="entity-detail-row">
                                     <div class="detail-icon"><i class="fa-solid fa-scale-balanced"></i></div>
-                                    <div><span>Registro profissional</span><strong>OAB/SP 123.456</strong></div>
+                                    <div><span>Registro profissional</span><strong id="perfilRegistro">—</strong></div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-regular fa-id-card"></i></div>
+                                    <div><span>CPF</span><strong id="perfilCpf">—</strong></div>
                                 </div>
                             </div>
                         </section>
@@ -665,11 +671,15 @@
                             <div class="entity-detail-list">
                                 <div class="entity-detail-row">
                                     <div class="detail-icon"><i class="fa-regular fa-envelope"></i></div>
-                                    <div><span>E-mail profissional</span><strong>mario.silva@vixlegen.com</strong></div>
+                                    <div><span>E-mail profissional</span><strong id="perfilEmail">—</strong></div>
                                 </div>
                                 <div class="entity-detail-row">
-                                    <div class="detail-icon"><i class="fa-solid fa-building"></i></div>
-                                    <div><span>Organização</span><strong>CompanyJUS</strong></div>
+                                    <div class="detail-icon"><i class="fa-solid fa-phone"></i></div>
+                                    <div><span>Telefone</span><strong id="perfilTelefone">—</strong></div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-location-dot"></i></div>
+                                    <div><span>Localização</span><strong id="perfilLocalizacao">—</strong></div>
                                 </div>
                             </div>
                         </section>
@@ -677,16 +687,19 @@
                         <section class="entity-panel profile-specialty-panel">
                             <div class="entity-panel-heading">
                                 <div>
-                                    <span class="panel-kicker">ATUAÇÃO</span>
-                                    <h3>Área de especialidade</h3>
+                                    <span class="panel-kicker">CADASTRO</span>
+                                    <h3>Informações complementares</h3>
                                 </div>
-                                <i class="fa-solid fa-book-open"></i>
+                                <i class="fa-solid fa-address-card"></i>
                             </div>
-                            <div class="specialty-highlight">
-                                <i class="fa-solid fa-briefcase"></i>
-                                <div>
-                                    <strong>Direito Empresarial &amp; Societário</strong>
-                                    <span>Área principal cadastrada no perfil profissional.</span>
+                            <div class="entity-detail-list">
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-building"></i></div>
+                                    <div><span>Empresa</span><strong id="perfilEmpresaDetalhe">—</strong></div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-regular fa-calendar"></i></div>
+                                    <div><span>Data de nascimento</span><strong id="perfilNascimento">—</strong></div>
                                 </div>
                             </div>
                         </section>
@@ -694,11 +707,11 @@
 
                     <div class="entity-footer-strip">
                         <div>
-                            <i class="fa-solid fa-circle-info"></i>
-                            <span>Esses dados identificam o profissional nas áreas internas do VixLegen.</span>
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Os dados exibidos nesta tela são carregados do backend após o login.</span>
                         </div>
-                        <button class="entity-link-action" type="button" data-go-section="sec-notificacoes">
-                            Abrir notificações <i class="fa-solid fa-arrow-right"></i>
+                        <button class="entity-link-action" type="button" data-go-section="sec-empresa">
+                            Abrir empresa <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
