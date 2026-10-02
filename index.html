@@ -13,7 +13,7 @@
     <!-- AUTENTICAÇÃO: LOGIN E CADASTRO -->
     <section class="auth-shell" id="authShell">
         <div class="auth-brand-panel">
-            <div class="auth-brand-mark"><img src="LogoVL_WHITE.png" alt="VixLegen" class="brand-logo brand-logo-auth"></div>
+            <div class="auth-brand-mark"><img src="img/LogoVL_WHITE.png" alt="VixLegen" class="brand-logo brand-logo-auth"></div>
             <span class="auth-eyebrow">VIXLEGEN</span>
             <h2>Rotina jurídica organizada em um só ambiente.</h2>
             <p>Entre para acessar suas minutas, clientes, processos, tarefas e demais recursos do escritório.</p>
@@ -72,38 +72,44 @@
         <!-- BARRA LATERAL (SIDEBAR) -->
         <aside class="sidebar" id="minhaSidebar">
             <nav class="nav-icons">
-                <div class="icon-btn active" data-target="sec-editor" title="Editor de Minutas">
+                <div class="icon-btn active" data-target="sec-home" data-tooltip="Início">
+                    <i class="fa-solid fa-house"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-editor" data-tooltip="Editor de Minutas">
                     <i class="fa-solid fa-pen"></i>
                 </div>
-                <div class="icon-btn" data-target="sec-processos" title="Processos Jurídicos">
+                <div class="icon-btn" data-target="sec-processos" data-tooltip="Processos Jurídicos">
                     <i class="fa-solid fa-scale-balanced"></i>
                 </div>
-                <div class="icon-btn" data-target="sec-clientes" title="Clientes">
+                <div class="icon-btn" data-target="sec-clientes" data-tooltip="Clientes">
                     <i class="fa-solid fa-user-group"></i>
                 </div>
-                <div class="icon-btn" data-target="sec-tarefas" title="Tarefas / Kanban">
+                <div class="icon-btn" data-target="sec-tarefas" data-tooltip="Tarefas e Kanban">
                     <i class="fa-solid fa-border-all"></i>
                 </div>
-                <div class="icon-btn" data-target="sec-notificacoes" title="Central de Notificações">
+                <div class="icon-btn" data-target="sec-notificacoes" data-tooltip="Notificações">
                     <i class="fa-solid fa-bell"></i>
-                    <span class="badge-count" id="badgeNotifCount">5</span>
+                    <span class="badge-count" id="badgeNotifCount">0</span>
                 </div>
-                <div class="icon-btn" data-target="sec-ia" title="Assistente Gemini IA">
+                <div class="icon-btn" data-target="sec-ia" data-tooltip="Assistente IA">
                     <i class="fa-solid fa-robot"></i>
                 </div>
-                <div class="icon-btn" data-target="sec-empresa" title="CompanyJUS">
+                <div class="icon-btn" data-target="sec-empresa" data-tooltip="Empresa">
                     <i class="fa-regular fa-building"></i>
                 </div>
-                <div class="icon-btn" data-target="sec-perfil" title="Perfil do Utilizador">
+                <div class="icon-btn" data-target="sec-perfil" data-tooltip="Perfil">
                     <i class="fa-solid fa-user"></i>
                 </div>
-                <div class="icon-btn" id="btnSair" title="Sair da Sessão">
+                <div class="icon-btn" id="btnTema" data-tooltip="Alternar tema" role="button" tabindex="0">
+                    <i class="fa-solid fa-moon" id="iconeTema"></i>
+                </div>
+                <div class="icon-btn" id="btnSair" data-tooltip="Sair da sessão">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 </div>
             </nav>
 
             <div class="logo">
-                <img src="LogoVL_WHITE.png" alt="VixLegen" class="brand-logo brand-logo-sidebar">
+                <img src="img/LogoVL_WHITE.png" alt="VixLegen" class="brand-logo brand-logo-sidebar">
             </div>
         </aside>
 
@@ -113,8 +119,65 @@
                 <i class="fa-solid fa-bars"></i>
             </button>
 
+            <!-- TELA INICIAL -->
+            <section id="sec-home" class="app-section active">
+                <div class="home-page">
+                    <header class="home-hero">
+                        <div>
+                            <span class="section-eyebrow">PAINEL VIXLEGEN</span>
+                            <h1>Seu escritório em um só lugar.</h1>
+                            <p>Continue de onde parou, acompanhe processos, tarefas e avisos sem cair direto no editor.</p>
+                        </div>
+                        <img src="img/LogoVL_RED.png" alt="VixLegen" class="home-logo">
+                    </header>
+
+                    <div class="home-stats">
+                        <button class="home-stat-card" type="button" data-go-section="sec-processos">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                            <div><span>Processos</span><strong id="homeProcessosCount">0</strong></div>
+                        </button>
+                        <button class="home-stat-card" type="button" data-go-section="sec-clientes">
+                            <i class="fa-solid fa-user-group"></i>
+                            <div><span>Clientes</span><strong id="homeClientesCount">0</strong></div>
+                        </button>
+                        <button class="home-stat-card" type="button" data-go-section="sec-tarefas">
+                            <i class="fa-solid fa-list-check"></i>
+                            <div><span>Tarefas abertas</span><strong id="homeTarefasCount">0</strong></div>
+                        </button>
+                        <button class="home-stat-card" type="button" data-go-section="sec-notificacoes">
+                            <i class="fa-regular fa-bell"></i>
+                            <div><span>Não lidas</span><strong id="homeNotifCount">0</strong></div>
+                        </button>
+                    </div>
+
+                    <div class="home-grid">
+                        <section class="home-panel">
+                            <div class="home-panel-head">
+                                <div><span class="panel-kicker">ATALHOS</span><h2>Acesso rápido</h2></div>
+                            </div>
+                            <div class="home-shortcuts">
+                                <button type="button" data-go-section="sec-editor"><i class="fa-solid fa-file-pen"></i><span>Nova minuta</span></button>
+                                <button type="button" data-go-section="sec-processos"><i class="fa-solid fa-folder-open"></i><span>Abrir processos</span></button>
+                                <button type="button" data-go-section="sec-tarefas"><i class="fa-solid fa-border-all"></i><span>Ver Kanban</span></button>
+                                <button type="button" data-go-section="sec-ia"><i class="fa-solid fa-robot"></i><span>Assistente IA</span></button>
+                            </div>
+                        </section>
+
+                        <section class="home-panel">
+                            <div class="home-panel-head">
+                                <div><span class="panel-kicker">ATIVIDADE</span><h2>Últimos avisos</h2></div>
+                                <button type="button" class="entity-link-action" data-go-section="sec-notificacoes">Ver tudo</button>
+                            </div>
+                            <div id="homeNotificationsPreview" class="home-notifications-preview">
+                                <div class="home-empty">Nenhuma notificação carregada.</div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </section>
+
             <!-- SEÇÃO 1: EDITOR JURÍDICO INTEGRADO -->
-            <section id="sec-editor" class="app-section active">
+            <section id="sec-editor" class="app-section" style="display: none;">
                 <div class="editor-wrapper">
                     <!-- BARRA DE FERRAMENTAS SUPERIOR -->
                     <div class="editor-toolbar">
@@ -477,19 +540,47 @@
 
             <!-- SEÇÃO 5: ASSISTENTE IA -->
             <section id="sec-ia" class="app-section" style="display: none;">
-                <header class="header">
-                    <h1 class="page-title">Assistente Jurídico IA</h1>
-                </header>
-                <div class="chat-box">
-                    <div class="chat-messages" id="chatMessages">
-                        <div class="chat-msg ai">
-                            <i class="fa-solid fa-robot"></i>
-                            <p>Olá! Sou o assistente VixLegen IA. Como posso ajudar nas tuas minutas ou pesquisas jurídicas hoje?</p>
+                <div class="ai-page">
+                    <header class="records-header">
+                        <div>
+                            <span class="section-eyebrow">ASSISTENTE JURÍDICO</span>
+                            <h1 class="page-title">IA VixLegen</h1>
+                            <p>Converse sobre o contexto do processo e anexe documentos para usar como material de apoio.</p>
                         </div>
-                    </div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chatInput" placeholder="Faça uma pergunta sobre prazos, legislação ou contratos...">
-                        <button id="btnEnviarChat" class="add-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                    </header>
+
+                    <div class="ai-workspace">
+                        <aside class="ai-context-panel">
+                            <span class="panel-kicker">CONTEXTO</span>
+                            <h2>Arquivos da conversa</h2>
+                            <p>Adicione PDFs, DOCX, TXT ou imagens. Os arquivos ficam preparados para a conversa atual.</p>
+                            <label class="ai-upload-btn" for="aiFileInput">
+                                <i class="fa-solid fa-paperclip"></i> Adicionar arquivos
+                            </label>
+                            <input id="aiFileInput" type="file" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" hidden>
+                            <div id="aiFilesList" class="ai-files-list">
+                                <div class="ai-file-empty">Nenhum arquivo anexado.</div>
+                            </div>
+                        </aside>
+
+                        <div class="chat-box ai-chat-box">
+                            <div class="chat-messages" id="chatMessages">
+                                <div class="chat-msg ai">
+                                    <i class="fa-solid fa-robot"></i>
+                                    <p>Selecione um processo ou anexe documentos e descreva o que deseja analisar.</p>
+                                </div>
+                            </div>
+                            <div class="ai-composer">
+                                <div id="aiAttachedSummary" class="ai-attached-summary" hidden></div>
+                                <div class="chat-input-area">
+                                    <button id="btnAnexarIa" class="ai-attach-inline" type="button" title="Adicionar arquivo">
+                                        <i class="fa-solid fa-paperclip"></i>
+                                    </button>
+                                    <textarea id="chatInput" rows="2" placeholder="Pergunte sobre a minuta, prazo, documento ou processo..."></textarea>
+                                    <button id="btnEnviarChat" class="add-btn" type="button"><i class="fa-solid fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
