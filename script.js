@@ -87,43 +87,170 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. COMANDOS DO EDITOR DE TEXTO (WYSIWYG)
     // =========================================
     const paperEditor = document.getElementById("paperEditor");
+    let savedEditorRange = null;
 
-    function execCmd(command, value = null) {
-        document.execCommand(command, false, value);
-        paperEditor.focus();
-        atualizarMetricas();
+    const editorCommandButtons = {
+        btnBold: "bold",
+        btnItalic: "italic",
+        btnUnderline: "underline",
+        btnStrike: "strikeThrough",
+        btnAlignLeft: "justifyLeft",
+        btnAlignCenter: "justifyCenter",
+        btnAlignRight: "justifyRight",
+        btnAlignJustify: "justifyFull",
+        btnUnorderedList: "insertUnorderedList",
+        btnOrderedList: "insertOrderedList"
+    };
+
+    function selectionBelongsToEditor(selection = window.getSelection()) {
+        if (!selection || !selection.rangeCount || !paperEditor) return false;
+
+        const range = selection.getRangeAt(0);
+        const common = range.commonAncestorContainer;
+        const node = common.nodeType === Node.TEXT_NODE
+            ? common.parentNode
+            : common;
+
+        return node === paperEditor || paperEditor.contains(node);
     }
 
-    document.getElementById("btnBold").addEventListener("click", () => execCmd("bold"));
-    document.getElementById("btnItalic").addEventListener("click", () => execCmd("italic"));
-    document.getElementById("btnUnderline").addEventListener("click", () => execCmd("underline"));
-    document.getElementById("btnStrike").addEventListener("click", () => execCmd("strikeThrough"));
+    function captureEditorSelection() {
+        const selection = window.getSelection();
 
-    document.getElementById("btnAlignLeft").addEventListener("click", () => execCmd("justifyLeft"));
-    document.getElementById("btnAlignCenter").addEventListener("click", () => execCmd("justifyCenter"));
-    document.getElementById("btnAlignRight").addEventListener("click", () => execCmd("justifyRight"));
-    document.getElementById("btnAlignJustify").addEventListener("click", () => execCmd("justifyFull"));
+        if (!selectionBelongsToEditor(selection)) return;
 
-    document.getElementById("btnUnorderedList").addEventListener("click", () => execCmd("insertUnorderedList"));
-    document.getElementById("btnOrderedList").addEventListener("click", () => execCmd("insertOrderedList"));
+        savedEditorRange = selection.getRangeAt(0).cloneRange();
+    }
 
-    document.getElementById("btnUndo").addEventListener("click", () => execCmd("undo"));
-    document.getElementById("btnRedo").addEventListener("click", () => execCmd("redo"));
+    function restoreEditorSelection() {
+        if (!savedEditorRange) return;
 
-    document.getElementById("fontFamilySelect").addEventListener("change", (e) => {
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(savedEditorRange);
+    }
+
+    function atualizarEstadoToolbar() {
+        Object.entries(editorCommandButtons).forEach(([id, command]) => {
+            const button = document.getElementById(id);
+            if (!button) return;
+
+            let active = false;
+
+            try {
+                active = document.queryCommandState(command);
+            } catch (_) {
+                active = false;
+            }
+
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-pressed", String(active));
+        });
+    }
+
+    function execCmd(command, value = null) {
+        if (!paperEditor) return;
+
+        paperEditor.focus();
+        restoreEditorSelection();
+
+        document.execCommand(command, false, value);
+
+        captureEditorSelection();
+        atualizarEstadoToolbar();
+        atualizarMetricas();
+
+        paperEditor.dispatchEvent(
+            new Event("input", { bubbles: true })
+        );
+    }
+
+    Object.entries(editorCommandButtons).forEach(([id, command]) => {
+        const button = document.getElementById(id);
+        if (!button) return;
+
+        // Mantém a seleção do texto ao clicar na toolbar.
+        button.addEventListener("mousedown", event => {
+            event.preventDefault();
+        });
+
+        button.addEventListener("click", () => {
+            execCmd(command);
+        });
+    });
+
+    document.getElementById("btnUndo")?.addEventListener("mousedown", event => event.preventDefault());
+    document.getElementById("btnRedo")?.addEventListener("mousedown", event => event.preventDefault());
+    document.getElementById("btnUndo")?.addEventListener("click", () => execCmd("undo"));
+    document.getElementById("btnRedo")?.addEventListener("click", () => execCmd("redo"));
+
+    document.getElementById("fontFamilySelect")?.addEventListener("change", (e) => {
         execCmd("fontName", e.target.value);
     });
 
-    document.getElementById("fontSizeSelect").addEventListener("change", (e) => {
+    document.getElementById("fontSizeSelect")?.addEventListener("change", (e) => {
         execCmd("fontSize", e.target.value);
     });
 
-    document.getElementById("textColorPicker").addEventListener("input", (e) => {
+    document.getElementById("textColorPicker")?.addEventListener("input", (e) => {
         execCmd("foreColor", e.target.value);
     });
 
-    document.getElementById("lineSpacingSelect").addEventListener("change", (e) => {
-        paperEditor.style.lineHeight = e.target.value;
+    document.getElementById("lineSpacingSelect")?.addEventListener("change", (e) => {
+        paperEditor.focus();
+        restoreEditorSelection();
+
+        const selection = window.getSelection();
+        const range = selection && selection.rangeCount
+            ? selection.getRangeAt(0)
+            : null;
+
+        let element = range
+            ? (range.startContainer.nodeType === Node.TEXT_NODE
+                ? range.startContainer.parentElement
+                : range.startContainer)
+            : null;
+
+        while (
+            element &&
+            element.parentElement !== paperEditor &&
+            element !== paperEditor
+        ) {
+            element = element.parentElement;
+        }
+
+        if (element && element !== paperEditor) {
+            element.style.lineHeight = e.target.value;
+        } else {
+            paperEditor.style.lineHeight = e.target.value;
+        }
+
+        captureEditorSelection();
+        paperEditor.dispatchEvent(
+            new Event("input", { bubbles: true })
+        );
+    });
+
+    document.addEventListener("selectionchange", () => {
+        if (selectionBelongsToEditor()) {
+            captureEditorSelection();
+            atualizarEstadoToolbar();
+        }
+    });
+
+    paperEditor?.addEventListener("keyup", () => {
+        captureEditorSelection();
+        atualizarEstadoToolbar();
+    });
+
+    paperEditor?.addEventListener("mouseup", () => {
+        captureEditorSelection();
+        atualizarEstadoToolbar();
+    });
+
+    paperEditor?.addEventListener("input", () => {
+        captureEditorSelection();
+        atualizarEstadoToolbar();
     });
 
     // Citação Jurisprudencial (4cm)

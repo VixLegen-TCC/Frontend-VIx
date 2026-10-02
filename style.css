@@ -3409,3 +3409,245 @@ body[data-theme="dark"] select option:checked {
         color: #ffffff;
     }
 }
+
+
+/* =========================================
+   TOOLBAR: ESTADO ATIVO + SELECTS COMPACTOS
+   ========================================= */
+.tool-btn.active {
+    background: #ead9dc !important;
+    color: var(--cor-primaria) !important;
+    border-color: #b97b83 !important;
+    box-shadow: inset 0 0 0 1px rgba(136,57,66,.08);
+}
+
+body[data-theme="dark"] .tool-btn.active {
+    background: #6b3038 !important;
+    color: #ffffff !important;
+    border-color: #a65a64 !important;
+    box-shadow: 0 0 0 2px rgba(166,90,100,.16);
+}
+
+/* Remove o picker experimental que estava criando margem/notch no Edge. */
+.records-filter,
+.doc-context-select,
+.tool-select,
+.form-field select,
+.modal-body select,
+#filtroPrioridadeTarefa,
+#selectPrioridadeTarefa,
+#selectStatusTarefa,
+#selectProcessoTarefa {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+@supports (appearance: base-select) {
+    .records-filter,
+    .doc-context-select,
+    .tool-select,
+    .form-field select,
+    .modal-body select,
+    #filtroPrioridadeTarefa,
+    #selectPrioridadeTarefa,
+    #selectStatusTarefa,
+    #selectProcessoTarefa {
+        appearance: none !important;
+    }
+
+    ::picker(select) {
+        margin: 0 !important;
+    }
+}
+
+/* Toolbar precisa ser compacta; não usa o tamanho dos filtros de página. */
+.editor-toolbar .tool-select,
+.editor-toolbar .doc-context-select {
+    min-height: 32px !important;
+    height: 32px !important;
+    padding: 0 27px 0 9px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+    line-height: 30px;
+}
+
+.editor-toolbar #fontFamilySelect {
+    min-width: 172px;
+}
+
+.editor-toolbar #fontSizeSelect {
+    min-width: 88px;
+}
+
+.editor-toolbar #lineSpacingSelect {
+    min-width: 118px;
+}
+
+.editor-toolbar #selectMinutaProcesso,
+.editor-toolbar #selectMinutaCategoria {
+    min-width: 120px;
+    max-width: 170px;
+}
+
+.records-toolbar .records-filter,
+.kanban-toolbar .records-filter {
+    min-height: 36px !important;
+    height: 36px !important;
+    padding: 0 30px 0 11px !important;
+    line-height: 34px;
+}
+
+/* =========================================
+   CONVERSA DA IA
+   ========================================= */
+.ai-chat-box {
+    min-height: 620px;
+    padding: 0 !important;
+    overflow: hidden;
+    justify-content: initial !important;
+}
+
+.ai-chat-box .chat-messages {
+    flex: 1;
+    min-height: 0;
+    padding: 20px;
+    overflow-y: auto;
+    align-items: stretch;
+}
+
+.ai-chat-box .chat-msg {
+    width: fit-content;
+    max-width: min(72%, 680px);
+    padding: 11px 13px;
+    border: 1px solid #e2d7da;
+    border-radius: 14px 14px 14px 5px;
+    background: #f7f2f3;
+    color: #3b3235;
+    box-shadow: 0 3px 10px rgba(57,34,39,.035);
+}
+
+.ai-chat-box .chat-msg.ai {
+    align-self: flex-start;
+}
+
+.ai-chat-box .chat-msg.ai > i {
+    width: 25px;
+    height: 25px;
+    flex: 0 0 25px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    background: #eadadd;
+    color: var(--cor-primaria);
+    margin-top: 1px;
+}
+
+.ai-chat-box .chat-msg p {
+    margin: 0;
+    color: inherit;
+    font-size: 11.5px;
+    line-height: 1.55;
+}
+
+.ai-chat-box .chat-msg.user {
+    align-self: flex-end;
+    border-radius: 14px 14px 5px 14px;
+    border-color: #7a2e37;
+    background: var(--cor-primaria);
+    color: #ffffff;
+}
+
+.ai-chat-box .chat-msg.user p {
+    color: #ffffff;
+}
+
+.ai-chat-box .ai-composer {
+    flex: 0 0 auto;
+    padding: 13px 15px;
+    border-top: 1px solid #e3dade;
+    background: #fbf8f9;
+}
+
+.ai-chat-box .chat-input-area {
+    align-items: flex-end;
+    gap: 9px;
+}
+
+.ai-chat-box .chat-input-area textarea {
+    min-height: 44px;
+    max-height: 120px;
+    padding: 11px 13px;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #362e30;
+}
+
+.ai-chat-box .ai-attach-inline {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+}
+
+.ai-chat-box #btnEnviarChat {
+    width: 42px;
+    height: 40px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    flex: 0 0 42px;
+    border-radius: 10px;
+}
+
+body[data-theme="dark"] .ai-chat-box .chat-messages {
+    background: #2a2427;
+}
+
+body[data-theme="dark"] .ai-chat-box .chat-msg {
+    background: #352e31 !important;
+    border-color: #4c3e43 !important;
+    color: #f2e9ec !important;
+}
+
+body[data-theme="dark"] .ai-chat-box .chat-msg.ai > i {
+    background: #512f35 !important;
+    color: #f2aeb6 !important;
+}
+
+body[data-theme="dark"] .ai-chat-box .chat-msg.user {
+    background: #853944 !important;
+    border-color: #a8545e !important;
+    color: #ffffff !important;
+}
+
+body[data-theme="dark"] .ai-chat-box .ai-composer {
+    background: #241f21 !important;
+    border-top-color: #463a3e !important;
+}
+
+body[data-theme="dark"] .ai-chat-box .chat-input-area textarea {
+    background: #30292c !important;
+    border-color: #514349 !important;
+    color: #f5edef !important;
+}
+
+body[data-theme="dark"] .ai-chat-box .chat-input-area textarea::placeholder {
+    color: #a89a9e !important;
+}
+
+body[data-theme="dark"] .ai-chat-box .ai-attach-inline {
+    background: #352d30 !important;
+    border-color: #57484d !important;
+    color: #f2b0b7 !important;
+}
+
+@media (max-width: 760px) {
+    .ai-chat-box .chat-msg {
+        max-width: 88%;
+    }
+
+    .editor-toolbar .tool-select,
+    .editor-toolbar .doc-context-select {
+        min-width: 0;
+    }
+}
