@@ -202,7 +202,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${escapeHtml(c.email || "—")}</td>
                     <td>${escapeHtml(c.telefone || "—")}</td>
                     <td><div class="record-actions">
-                        <button class="record-icon-btn" data-cliente-view="${c.idCliente}" title="Ver detalhes"><i class="fa-regular fa-eye"></i></button>
+                        <button class="record-more-btn" data-cliente-view="${c.idCliente}" title="Ver mais"><i class="fa-regular fa-eye"></i> Ver mais</button>
                         <button class="record-icon-btn danger" data-cliente-delete="${c.idCliente}" title="Excluir"><i class="fa-regular fa-trash-can"></i></button>
                     </div></td>
                 </tr>`).join("")
@@ -334,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${statusPill(state.status.get(p.idProcesso))}</td>
                     <td>${formatDate(p.dataAbertura)}</td>
                     <td><div class="record-actions">
-                        <button class="record-icon-btn" data-processo-view="${p.idProcesso}" title="Ver detalhes"><i class="fa-regular fa-eye"></i></button>
+                        <button class="record-more-btn" data-processo-view="${p.idProcesso}" title="Ver mais"><i class="fa-regular fa-eye"></i> Ver mais</button>
                         <button class="record-icon-btn" data-processo-editor="${p.idProcesso}" title="Abrir no editor"><i class="fa-solid fa-file-pen"></i></button>
                         <button class="record-icon-btn danger" data-processo-delete="${p.idProcesso}" title="Excluir"><i class="fa-regular fa-trash-can"></i></button>
                     </div></td>
