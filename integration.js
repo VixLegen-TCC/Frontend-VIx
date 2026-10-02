@@ -8,7 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
         processos: [],
         status: new Map(),
         categoriasDocumento: [],
-        documentoAtualId: null
+        documentoAtualId: null,
+        usuarioDetalhado: null
     };
 
     const $ = (id) => document.getElementById(id);
@@ -29,8 +30,20 @@ document.addEventListener("DOMContentLoaded", () => {
             : await response.text().catch(() => "");
 
         if (!response.ok) {
-            const message = data?.message || data?.erro || data?.error || data || `Erro HTTP ${response.status}`;
-            const error = new Error(typeof message === "string" ? message : "Falha na comunicação com o servidor");
+            let message = data?.message || data?.erro || data?.error || data || `Erro HTTP ${response.status}`;
+
+            if (message && typeof message === "object") {
+                const campos = Object.entries(message)
+                    .map(([campo, valor]) => `${campo}: ${valor}`)
+                    .join(" • ");
+                message = campos || "Requisição inválida";
+            }
+
+            const error = new Error(
+                typeof message === "string"
+                    ? message
+                    : "Falha na comunicação com o servidor"
+            );
             error.status = response.status;
             throw error;
         }
@@ -223,7 +236,7 @@ document.addEventListener("DOMContentLoaded", () => {
             telefone: $("clienteTelefone").value.trim(),
             cpf: tipo === "cpf" ? documento : null,
             cnpj: tipo === "cnpj" ? documento : null,
-            usuarioResponsavel: { idUsuario: state.usuario?.idUsuario }
+            usuarioResponsavelId: state.usuario?.idUsuario
         };
 
         if (!payload.nomeCompleto || !payload.email || !payload.telefone || !documento) {
@@ -349,11 +362,11 @@ document.addEventListener("DOMContentLoaded", () => {
             segredoJustica: $("processoSegredo").checked,
             dataAbertura: $("processoDataAbertura").value,
             dataEncerramento: null,
-            cliente: { idCliente: Number($("processoCliente").value) }
+            clienteId: Number($("processoCliente").value)
         };
 
         if (!payload.numeroProcesso || !payload.vara || !payload.comarca || !payload.tribunal ||
-            !payload.instancia || !payload.dataAbertura || !payload.cliente.idCliente) {
+            !payload.instancia || !payload.dataAbertura || !payload.clienteId) {
             return alertModal("Dados incompletos", "Preencha os dados principais do processo.");
         }
 
@@ -371,7 +384,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     tipoAcao: $("processoTipoAcao").value.trim() || "Não informado",
                     faseProcessual: $("processoFase").value.trim() || "Inicial",
                     descricaoObjeto: $("processoObjeto").value.trim() || "Não informado",
-                    processo: { idProcesso: processo.idProcesso }
+                    processoId: processo.idProcesso
                 })
             });
 
@@ -422,6 +435,105 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     });
+
+    async function loadPerfil() {
+        if (!state.token) return;
+
+        state.usuarioDetalhado = await api("/auth/me");
+        renderPerfilEmpresa();
+    }
+
+    function renderPerfilEmpresa() {
+        const u = state.usuarioDetalhado;
+        if (!u) return;
+
+        const nomeCompleto = [u.primeiroNome, u.ultimoNome]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+
+        const iniciais = [u.primeiroNome, u.ultimoNome]
+            .filter(Boolean)
+            .map(parte => parte.charAt(0).toUpperCase())
+            .join("")
+            .slice(0, 2) || "VL";
+
+        const categoria = ({
+            1: "Administrador Geral",
+            2: "Advogado Sênior",
+            3: "Advogado Júnior",
+            4: "Estagiário"
+        })[state.usuario?.nivelAcesso] || "Profissional VixLegen";
+
+        setText("perfilIniciais", iniciais);
+        setText("perfilNome", nomeCompleto || "Profissional");
+        setText("perfilCategoria", categoria);
+        setText("perfilOab", u.numeroOAB ? `OAB ${u.numeroOAB}` : "OAB não informada");
+        setText("perfilEmpresaTag", u.empresa || "Empresa não informada");
+        setText("perfilEmpresa", u.empresa || "Não informada");
+        setText("perfilNomeCompleto", nomeCompleto || "—");
+        setText("perfilRegistro", u.numeroOAB || "—");
+        setText("perfilCpf", u.cpf || "—");
+        setText("perfilEmail", u.email || "—");
+        setText("perfilTelefone", u.telefone || "—");
+        setText("perfilLocalizacao", [u.cidade, u.estado].filter(Boolean).join(" - ") || "—");
+        setText("perfilEmpresaDetalhe", u.empresa || "—");
+        setText("perfilNascimento", formatDate(u.dataNascimento));
+
+        setText("displayNomeEmpresa", u.empresa || "Empresa não informada");
+        setText("fieldEmpresaResponsavel", nomeCompleto || "—");
+        setText("fieldEmail", u.email || "—");
+        setText("fieldTelefone", u.telefone || "—");
+
+        const localizacao = [
+            [u.cidade, u.estado].filter(Boolean).join(" - "),
+            u.cep ? `CEP ${u.cep}` : ""
+        ].filter(Boolean).join(" • ");
+
+        setText("fieldEndereco", localizacao || "Localização não informada");
+    }
+
+    $("btnVerMaisPerfil")?.addEventListener("click", () => {
+        const u = state.usuarioDetalhado;
+        if (!u) return;
+
+        $("detalhesTitulo").innerHTML = '<i class="fa-regular fa-id-card"></i> Dados completos do perfil';
+        $("detalhesConteudo").innerHTML =
+            detail("Nome", [u.primeiroNome, u.ultimoNome].filter(Boolean).join(" ")) +
+            detail("E-mail", u.email) +
+            detail("Telefone", u.telefone) +
+            detail("CPF", u.cpf) +
+            detail("RG", u.rg) +
+            detail("Número OAB", u.numeroOAB) +
+            detail("Data de nascimento", formatDate(u.dataNascimento)) +
+            detail("Empresa", u.empresa) +
+            detail("Cidade", u.cidade) +
+            detail("Estado", u.estado) +
+            detail("CEP", u.cep);
+        openModal("modalDetalhesRegistro");
+    });
+
+    $("btnVerMaisEmpresa")?.addEventListener("click", () => {
+        const u = state.usuarioDetalhado;
+        if (!u) return;
+
+        $("detalhesTitulo").innerHTML = '<i class="fa-regular fa-building"></i> Dados da empresa vinculada';
+        $("detalhesConteudo").innerHTML =
+            detail("Empresa", u.empresa) +
+            detail("Responsável", [u.primeiroNome, u.ultimoNome].filter(Boolean).join(" ")) +
+            detail("E-mail", u.email) +
+            detail("Telefone", u.telefone) +
+            detail("Cidade", u.cidade) +
+            detail("Estado", u.estado) +
+            detail("CEP", u.cep) +
+            detail("CNPJ", "Não disponível no modelo atual do backend");
+        openModal("modalDetalhesRegistro");
+    });
+
+    function setText(id, value) {
+        const el = $(id);
+        if (el) el.textContent = value ?? "—";
+    }
 
     async function loadCategoriasDocumento() {
         if (!state.token) return;
@@ -521,6 +633,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function loadAll() {
         const results = await Promise.allSettled([
+            loadPerfil(),
             loadClientes(),
             loadProcessos(),
             loadCategoriasDocumento()
