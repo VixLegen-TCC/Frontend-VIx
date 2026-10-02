@@ -10,12 +10,76 @@
 </head>
 <body>
 
-    <div class="layout-container">
+    <!-- AUTENTICAÇÃO: LOGIN E CADASTRO -->
+    <section class="auth-shell" id="authShell">
+        <div class="auth-brand-panel">
+            <div class="auth-brand-mark"><h1>VL.</h1><i class="fa-regular fa-gem"></i></div>
+            <span class="auth-eyebrow">VIXLEGEN</span>
+            <h2>Rotina jurídica organizada em um só ambiente.</h2>
+            <p>Entre para acessar suas minutas, clientes, processos, tarefas e demais recursos do escritório.</p>
+            <div class="auth-brand-features">
+                <div><i class="fa-solid fa-scale-balanced"></i><span>Gestão jurídica integrada</span></div>
+                <div><i class="fa-solid fa-file-pen"></i><span>Editor de documentos jurídicos</span></div>
+                <div><i class="fa-solid fa-list-check"></i><span>Processos, clientes e prazos</span></div>
+            </div>
+        </div>
+        <div class="auth-form-panel">
+            <div class="auth-card active" id="authLoginCard">
+                <div class="auth-card-header">
+                    <span class="section-eyebrow">ACESSO PROFISSIONAL</span>
+                    <h2>Entrar no VixLegen</h2>
+                    <p>Informe suas credenciais para continuar.</p>
+                </div>
+                <form id="formLogin" class="auth-form">
+                    <label for="loginEmail">E-mail</label>
+                    <div class="auth-input-wrap"><i class="fa-regular fa-envelope"></i><input type="email" id="loginEmail" autocomplete="email" placeholder="seu@email.com" required></div>
+                    <label for="loginSenha">Senha</label>
+                    <div class="auth-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="loginSenha" autocomplete="current-password" placeholder="Sua senha" required></div>
+                    <p class="auth-error" id="loginErro" hidden></p>
+                    <button class="auth-submit" type="submit"><i class="fa-solid fa-arrow-right-to-bracket"></i> Entrar</button>
+                </form>
+                <div class="auth-switch"><span>Ainda não possui conta?</span><button type="button" id="btnIrCadastro">Criar cadastro</button></div>
+            </div>
+            <div class="auth-card" id="authCadastroCard">
+                <div class="auth-card-header compact">
+                    <span class="section-eyebrow">NOVO PROFISSIONAL</span>
+                    <h2>Criar conta</h2>
+                    <p>Cadastre os dados profissionais exigidos pelo sistema.</p>
+                </div>
+                <form id="formCadastro" class="auth-form auth-form-grid">
+                    <div class="auth-field"><label for="cadPrimeiroNome">Primeiro nome</label><input type="text" id="cadPrimeiroNome" required></div>
+                    <div class="auth-field"><label for="cadUltimoNome">Último nome</label><input type="text" id="cadUltimoNome" required></div>
+                    <div class="auth-field wide"><label for="cadEmail">E-mail</label><input type="email" id="cadEmail" required></div>
+                    <div class="auth-field"><label for="cadSenha">Senha</label><input type="password" id="cadSenha" minlength="8" required></div>
+                    <div class="auth-field"><label for="cadTelefone">Telefone</label><input type="text" id="cadTelefone" required></div>
+                    <div class="auth-field"><label for="cadCpf">CPF</label><input type="text" id="cadCpf" required></div>
+                    <div class="auth-field"><label for="cadRg">RG</label><input type="text" id="cadRg" required></div>
+                    <div class="auth-field"><label for="cadNumeroOab">Número OAB</label><input type="text" id="cadNumeroOab" required></div>
+                    <div class="auth-field"><label for="cadDataNascimento">Data de nascimento</label><input type="date" id="cadDataNascimento" required></div>
+                    <div class="auth-field wide"><label for="cadEmpresa">Empresa</label><input type="text" id="cadEmpresa" required></div>
+                    <div class="auth-field"><label for="cadCep">CEP</label><input type="text" id="cadCep" required></div>
+                    <div class="auth-field"><label for="cadEstado">Estado</label><input type="text" id="cadEstado" maxlength="50" required></div>
+                    <div class="auth-field wide"><label for="cadCidade">Cidade</label><input type="text" id="cadCidade" required></div>
+                    <p class="auth-error wide" id="cadastroErro" hidden></p>
+                    <button class="auth-submit wide" type="submit"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
+                </form>
+                <div class="auth-switch"><span>Já possui uma conta?</span><button type="button" id="btnIrLogin">Voltar ao login</button></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="layout-container auth-hidden" id="appLayout">
         <!-- BARRA LATERAL (SIDEBAR) -->
         <aside class="sidebar" id="minhaSidebar">
             <nav class="nav-icons">
                 <div class="icon-btn active" data-target="sec-editor" title="Editor de Minutas">
                     <i class="fa-solid fa-pen"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-processos" title="Processos Jurídicos">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-clientes" title="Clientes">
+                    <i class="fa-solid fa-user-group"></i>
                 </div>
                 <div class="icon-btn" data-target="sec-tarefas" title="Tarefas / Kanban">
                     <i class="fa-solid fa-border-all"></i>
@@ -128,7 +192,9 @@
 
                         <!-- Título e Ações -->
                         <div class="toolbar-right">
-                            <input type="text" id="docTitle" class="doc-title-input" value="Processo_0001234-88_PeticaoInicial.docx" placeholder="Nome do documento...">
+                            <select id="selectMinutaProcesso" class="doc-context-select" title="Processo vinculado"><option value="">Processo...</option></select>
+                            <select id="selectMinutaCategoria" class="doc-context-select" title="Categoria do documento"><option value="">Categoria...</option></select>
+                            <input type="text" id="docTitle" class="doc-title-input" value="PeticaoInicial" placeholder="Nome do documento...">
                             <button class="tool-action-btn" id="btnSalvarMinuta"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
                             <button class="tool-action-btn pdf-btn" id="btnExportPDF"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
                         </div>
@@ -183,6 +249,39 @@
                             <span>Página 1 de 1</span>
                             <span style="color: #2ecc71;"><i class="fa-solid fa-cloud-arrow-up"></i> Alterações Guardadas</span>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO: PROCESSOS -->
+            <section id="sec-processos" class="app-section" style="display: none;">
+                <div class="records-page">
+                    <header class="records-header">
+                        <div><span class="section-eyebrow">GESTÃO PROCESSUAL</span><h1 class="page-title">Processos</h1><p>Acompanhe os processos jurídicos cadastrados e consulte seus dados principais.</p></div>
+                        <button id="btnNovoProcesso" class="add-btn" type="button"><i class="fa-solid fa-plus"></i> Novo Processo</button>
+                    </header>
+                    <div class="records-toolbar">
+                        <div class="records-search"><i class="fa-solid fa-magnifying-glass"></i><input id="buscaProcessos" type="search" placeholder="Buscar por número, cliente, tribunal ou comarca..."></div>
+                        <select id="filtroStatusProcesso" class="records-filter"><option value="">Todos os status</option><option value="EM_ANDAMENTO">Em andamento</option><option value="SUSPENSO">Suspenso</option><option value="ENCERRADO">Encerrado</option><option value="AGUARDANDO_DECISAO">Aguardando decisão</option></select>
+                    </div>
+                    <div class="records-card">
+                        <div class="records-table-wrap"><table class="records-table"><thead><tr><th>Processo</th><th>Cliente</th><th>Tribunal</th><th>Comarca</th><th>Status</th><th>Abertura</th><th>Ações</th></tr></thead><tbody id="processosTableBody"><tr class="records-placeholder"><td colspan="7">Carregando processos...</td></tr></tbody></table></div>
+                        <div class="records-footer"><span id="processosCount">0 processos</span><span>Dados fornecidos pelo backend VixLegen</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO: CLIENTES -->
+            <section id="sec-clientes" class="app-section" style="display: none;">
+                <div class="records-page">
+                    <header class="records-header">
+                        <div><span class="section-eyebrow">CARTEIRA DO ESCRITÓRIO</span><h1 class="page-title">Clientes</h1><p>Cadastre e consulte pessoas físicas ou jurídicas vinculadas aos processos.</p></div>
+                        <button id="btnNovoCliente" class="add-btn" type="button"><i class="fa-solid fa-user-plus"></i> Novo Cliente</button>
+                    </header>
+                    <div class="records-toolbar"><div class="records-search"><i class="fa-solid fa-magnifying-glass"></i><input id="buscaClientes" type="search" placeholder="Buscar por nome, CPF/CNPJ, e-mail ou telefone..."></div></div>
+                    <div class="records-card">
+                        <div class="records-table-wrap"><table class="records-table"><thead><tr><th>Cliente</th><th>Documento</th><th>E-mail</th><th>Telefone</th><th>Ações</th></tr></thead><tbody id="clientesTableBody"><tr class="records-placeholder"><td colspan="5">Carregando clientes...</td></tr></tbody></table></div>
+                        <div class="records-footer"><span id="clientesCount">0 clientes</span><span>Cliente é administrado pelo advogado e não possui login.</span></div>
                     </div>
                 </div>
             </section>
@@ -658,6 +757,47 @@
             </div>
         </div>
 
+        <!-- MODAL: NOVO CLIENTE -->
+        <div id="modalNovoCliente" class="modal-card modal-wide">
+            <div class="modal-header"><h3><i class="fa-solid fa-user-plus"></i> Cadastrar Cliente</h3><button class="modal-close">&times;</button></div>
+            <div class="modal-body form-grid">
+                <div class="form-field wide"><label>Nome completo</label><input type="text" id="clienteNome" placeholder="Nome do cliente"></div>
+                <div class="form-field"><label>E-mail</label><input type="email" id="clienteEmail" placeholder="cliente@email.com"></div>
+                <div class="form-field"><label>Telefone</label><input type="text" id="clienteTelefone" placeholder="(11) 99999-9999"></div>
+                <div class="form-field"><label>Tipo de documento</label><select id="clienteTipoDocumento"><option value="cpf">CPF</option><option value="cnpj">CNPJ</option></select></div>
+                <div class="form-field"><label id="clienteDocumentoLabel">CPF</label><input type="text" id="clienteDocumento" placeholder="000.000.000-00"></div>
+            </div>
+            <div class="modal-footer"><button class="modal-btn cancel">Cancelar</button><button class="modal-btn confirm" id="btnSalvarCliente">Salvar Cliente</button></div>
+        </div>
+
+        <!-- MODAL: NOVO PROCESSO -->
+        <div id="modalNovoProcesso" class="modal-card modal-wide">
+            <div class="modal-header"><h3><i class="fa-solid fa-scale-balanced"></i> Cadastrar Processo</h3><button class="modal-close">&times;</button></div>
+            <div class="modal-body form-grid">
+                <div class="form-field wide"><label>Número do processo</label><input type="text" id="processoNumero" placeholder="0000000-00.0000.0.00.0000"></div>
+                <div class="form-field wide"><label>Cliente</label><select id="processoCliente"><option value="">Selecione um cliente</option></select></div>
+                <div class="form-field"><label>Vara</label><input type="text" id="processoVara"></div>
+                <div class="form-field"><label>Comarca</label><input type="text" id="processoComarca"></div>
+                <div class="form-field"><label>Tribunal</label><input type="text" id="processoTribunal" placeholder="TJSP"></div>
+                <div class="form-field"><label>Instância</label><input type="text" id="processoInstancia" placeholder="1ª Instância"></div>
+                <div class="form-field"><label>Data de abertura</label><input type="date" id="processoDataAbertura"></div>
+                <div class="form-field"><label>Status inicial</label><select id="processoStatus"><option value="EM_ANDAMENTO">Em andamento</option><option value="AGUARDANDO_DECISAO">Aguardando decisão</option><option value="SUSPENSO">Suspenso</option><option value="ENCERRADO">Encerrado</option></select></div>
+                <div class="form-field"><label>Área do Direito</label><input type="text" id="processoAreaDireito" placeholder="Direito Cível"></div>
+                <div class="form-field"><label>Tipo da ação</label><input type="text" id="processoTipoAcao" placeholder="Ação de Cobrança"></div>
+                <div class="form-field"><label>Fase processual</label><input type="text" id="processoFase" placeholder="Fase de conhecimento"></div>
+                <div class="form-field"><label>Descrição do objeto</label><input type="text" id="processoObjeto" placeholder="Objeto principal do processo"></div>
+                <div class="form-field checkbox-field wide"><label><input type="checkbox" id="processoSegredo"> Segredo de justiça</label></div>
+            </div>
+            <div class="modal-footer"><button class="modal-btn cancel">Cancelar</button><button class="modal-btn confirm" id="btnSalvarProcesso">Salvar Processo</button></div>
+        </div>
+
+        <!-- MODAL: DETALHES -->
+        <div id="modalDetalhesRegistro" class="modal-card modal-wide">
+            <div class="modal-header"><h3 id="detalhesTitulo"><i class="fa-regular fa-folder-open"></i> Detalhes</h3><button class="modal-close">&times;</button></div>
+            <div class="modal-body"><div id="detalhesConteudo" class="detail-modal-content"></div></div>
+            <div class="modal-footer"><button class="modal-btn confirm" id="btnFecharDetalhes">Fechar</button></div>
+        </div>
+
         <!-- MODAL 3: CONFIRMAR SAIR -->
         <div id="modalSair" class="modal-card modal-small">
             <div class="modal-header">
@@ -690,5 +830,6 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="integration.js"></script>
 </body>
 </html>
