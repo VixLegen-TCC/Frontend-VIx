@@ -1495,18 +1495,18 @@ document.addEventListener("DOMContentLoaded", () => {
         scheduleEditorPagination();
     });
 
-    const editorObserver = editorEl
-        ? new MutationObserver(() => {
-            if (!isPaginatingEditor) {
-                scheduleEditorPagination(80);
-            }
-        })
-        : null;
+    document.querySelector(".editor-toolbar")?.addEventListener("click", () => {
+        scheduleEditorPagination(120);
+    });
 
-    editorObserver?.observe(editorEl, {
-        childList: true,
-        subtree: true,
-        characterData: true
+    document.querySelector(".editor-toolbar")?.addEventListener("change", () => {
+        scheduleEditorPagination(120);
+    });
+
+    document.addEventListener("click", event => {
+        if (event.target.closest(".btn-template")) {
+            setTimeout(() => scheduleEditorPagination(0), 0);
+        }
     });
 
     window.addEventListener("resize", () => {
