@@ -3129,3 +3129,283 @@ body[data-theme="dark"] .brand-logo {
     opacity: 1 !important;
 }
 
+
+
+/* =========================================
+   REFINO DE CONTRASTE + SELECTS
+   ========================================= */
+
+/* Selects com visual consistente no sistema */
+.records-filter,
+.doc-context-select,
+.tool-select,
+.form-field select,
+.modal-body select,
+#filtroPrioridadeTarefa,
+#selectPrioridadeTarefa,
+#selectStatusTarefa,
+#selectProcessoTarefa {
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 38px;
+    padding-right: 34px !important;
+    border: 1px solid #d9cfd1;
+    border-radius: 10px;
+    background-color: #fff;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #7b6c70 50%),
+        linear-gradient(135deg, #7b6c70 50%, transparent 50%);
+    background-position:
+        calc(100% - 16px) calc(50% - 2px),
+        calc(100% - 12px) calc(50% - 2px);
+    background-size: 4px 4px, 4px 4px;
+    background-repeat: no-repeat;
+    color: #3f3639;
+    font-family: var(--fonte-corpo);
+    font-weight: 650;
+    cursor: pointer;
+    transition:
+        border-color .16s ease,
+        box-shadow .16s ease,
+        background-color .16s ease;
+}
+
+.records-filter:hover,
+.doc-context-select:hover,
+.tool-select:hover,
+.form-field select:hover,
+.modal-body select:hover,
+#filtroPrioridadeTarefa:hover,
+#selectPrioridadeTarefa:hover,
+#selectStatusTarefa:hover,
+#selectProcessoTarefa:hover {
+    border-color: #bea8ac;
+    background-color: #fffafa;
+}
+
+.records-filter:focus,
+.doc-context-select:focus,
+.tool-select:focus,
+.form-field select:focus,
+.modal-body select:focus,
+#filtroPrioridadeTarefa:focus,
+#selectPrioridadeTarefa:focus,
+#selectStatusTarefa:focus,
+#selectProcessoTarefa:focus {
+    border-color: var(--cor-primaria);
+    box-shadow: 0 0 0 3px rgba(136,57,66,.12);
+    outline: 0;
+}
+
+select option {
+    background: #ffffff;
+    color: #3f3639;
+    font-family: var(--fonte-corpo);
+}
+
+select option:checked {
+    background: var(--cor-primaria);
+    color: #ffffff;
+}
+
+/* Edge/Chromium modernos: permite estilizar também o popup aberto. */
+@supports (appearance: base-select) {
+    .records-filter,
+    .doc-context-select,
+    .tool-select,
+    .form-field select,
+    .modal-body select,
+    #filtroPrioridadeTarefa,
+    #selectPrioridadeTarefa,
+    #selectStatusTarefa,
+    #selectProcessoTarefa,
+    ::picker(select) {
+        appearance: base-select;
+    }
+
+    ::picker(select) {
+        margin-top: 6px;
+        padding: 5px;
+        border: 1px solid #d6c9cc;
+        border-radius: 11px;
+        background: #ffffff;
+        box-shadow: 0 12px 28px rgba(42, 26, 30, .16);
+    }
+
+    select option {
+        min-height: 36px;
+        padding: 9px 11px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+    }
+
+    select option:hover,
+    select option:focus {
+        background: #f5e9eb;
+        color: var(--cor-primaria);
+    }
+
+    select option:checked {
+        background: var(--cor-primaria);
+        color: #ffffff;
+        font-weight: 800;
+    }
+}
+
+/* Contraste correto dos dados de Empresa/Perfil no tema escuro */
+body[data-theme="dark"] .entity-detail-row {
+    border-color: #473a3e !important;
+}
+
+body[data-theme="dark"] .entity-detail-row span {
+    color: #c1b3b7 !important;
+}
+
+body[data-theme="dark"] .entity-detail-row strong {
+    color: #f7f0f2 !important;
+}
+
+body[data-theme="dark"] .detail-icon {
+    background: #3a3033 !important;
+    color: #f1aab2 !important;
+    border: 1px solid #564348;
+}
+
+body[data-theme="dark"] .company-address-block {
+    background: #31292c !important;
+    border: 1px solid #473a3e !important;
+    border-radius: 10px;
+    padding: 14px !important;
+    color: #f4ecee !important;
+}
+
+body[data-theme="dark"] .company-address-block p {
+    color: #f4ecee !important;
+}
+
+body[data-theme="dark"] .company-address-block > i {
+    color: #d85c69 !important;
+}
+
+/* O aviso inferior da empresa não fica mais apagado. */
+body[data-theme="dark"] .entity-footer-strip {
+    background: #251f22 !important;
+    border-color: #473a3e !important;
+    color: #d8ccd0 !important;
+}
+
+body[data-theme="dark"] .entity-footer-strip > div,
+body[data-theme="dark"] .entity-footer-strip > div span {
+    color: #d8ccd0 !important;
+}
+
+body[data-theme="dark"] .entity-footer-strip .entity-link-action {
+    color: #f2c2c8 !important;
+}
+
+/* Corrige o rodapé branco dos cards de Clientes/Processos. */
+body[data-theme="dark"] .records-footer {
+    background: #251f22 !important;
+    border-top-color: #473a3e !important;
+    color: #bfb1b5 !important;
+}
+
+body[data-theme="dark"] .records-footer span,
+body[data-theme="dark"] .records-footer div {
+    color: #bfb1b5 !important;
+}
+
+/* Tabela e ações com contraste um pouco mais forte. */
+body[data-theme="dark"] .records-table tbody tr {
+    background: #30282b !important;
+}
+
+body[data-theme="dark"] .records-table tbody tr:nth-child(even) {
+    background: #2c2528 !important;
+}
+
+body[data-theme="dark"] .records-table tbody tr:hover:not(.records-placeholder) {
+    background: #3a3033 !important;
+}
+
+body[data-theme="dark"] .record-more-btn,
+body[data-theme="dark"] .record-icon-btn {
+    background: #3a3033 !important;
+    border-color: #59474c !important;
+    color: #f4e9ec !important;
+}
+
+body[data-theme="dark"] .record-more-btn:hover,
+body[data-theme="dark"] .record-icon-btn:hover {
+    background: #4a363b !important;
+    border-color: #76545c !important;
+    color: #ffffff !important;
+}
+
+/* Selects no tema escuro */
+body[data-theme="dark"] .records-filter,
+body[data-theme="dark"] .doc-context-select,
+body[data-theme="dark"] .tool-select,
+body[data-theme="dark"] .form-field select,
+body[data-theme="dark"] .modal-body select,
+body[data-theme="dark"] #filtroPrioridadeTarefa,
+body[data-theme="dark"] #selectPrioridadeTarefa,
+body[data-theme="dark"] #selectStatusTarefa,
+body[data-theme="dark"] #selectProcessoTarefa {
+    background-color: #2b2427 !important;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #d6c8cc 50%),
+        linear-gradient(135deg, #d6c8cc 50%, transparent 50%) !important;
+    color: #f5edef !important;
+    border-color: #55464b !important;
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] .records-filter:hover,
+body[data-theme="dark"] .doc-context-select:hover,
+body[data-theme="dark"] .tool-select:hover,
+body[data-theme="dark"] .form-field select:hover,
+body[data-theme="dark"] .modal-body select:hover,
+body[data-theme="dark"] #filtroPrioridadeTarefa:hover,
+body[data-theme="dark"] #selectPrioridadeTarefa:hover,
+body[data-theme="dark"] #selectStatusTarefa:hover,
+body[data-theme="dark"] #selectProcessoTarefa:hover {
+    background-color: #352c30 !important;
+    border-color: #75575e !important;
+}
+
+body[data-theme="dark"] select option {
+    background: #2b2427;
+    color: #f5edef;
+}
+
+body[data-theme="dark"] select option:checked {
+    background: #873842;
+    color: #ffffff;
+}
+
+@supports (appearance: base-select) {
+    body[data-theme="dark"] ::picker(select) {
+        background: #282124;
+        border-color: #58474c;
+        box-shadow: 0 14px 30px rgba(0,0,0,.35);
+        color: #f5edef;
+    }
+
+    body[data-theme="dark"] select option {
+        background: #282124;
+        color: #efe5e8;
+    }
+
+    body[data-theme="dark"] select option:hover,
+    body[data-theme="dark"] select option:focus {
+        background: #49353a;
+        color: #ffffff;
+    }
+
+    body[data-theme="dark"] select option:checked {
+        background: #873842;
+        color: #ffffff;
+    }
+}
