@@ -1410,6 +1410,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             $("paperEditor").dispatchEvent(new Event("input"));
+            scheduleEditorPagination(0);
         } catch (error) {
             alertModal(
                 "Não foi possível abrir a minuta",
@@ -1418,11 +1419,107 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Paginação visual no estilo Word. Os separadores são apenas de interface
+    // e são removidos antes de persistir a minuta no backend.
+    let paginationTimer = null;
+    let isPaginatingEditor = false;
+
+    function getEditorCleanHtml() {
+        const editor = $("paperEditor");
+        if (!editor) return "";
+
+        const clone = editor.cloneNode(true);
+        clone.querySelectorAll(".editor-page-break").forEach(node => node.remove());
+
+        return clone.innerHTML;
+    }
+
+    function scheduleEditorPagination(delay = 220) {
+        clearTimeout(paginationTimer);
+        paginationTimer = setTimeout(paginateEditor, delay);
+    }
+
+    function paginateEditor() {
+        const editor = $("paperEditor");
+        if (!editor || isPaginatingEditor) return;
+
+        isPaginatingEditor = true;
+
+        try {
+            editor.querySelectorAll(".editor-page-break").forEach(node => node.remove());
+
+            const PAGE_CONTENT_HEIGHT = 980;
+            const children = Array.from(editor.children)
+                .filter(node => !node.classList.contains("editor-page-break"));
+
+            let usedHeight = 0;
+            let pages = 1;
+
+            children.forEach(child => {
+                const style = getComputedStyle(child);
+                const marginTop = parseFloat(style.marginTop) || 0;
+                const marginBottom = parseFloat(style.marginBottom) || 0;
+                const height = Math.max(
+                    child.getBoundingClientRect().height + marginTop + marginBottom,
+                    1
+                );
+
+                if (usedHeight > 0 && usedHeight + height > PAGE_CONTENT_HEIGHT) {
+                    pages += 1;
+
+                    const separator = document.createElement("div");
+                    separator.className = "editor-page-break";
+                    separator.setAttribute("contenteditable", "false");
+                    separator.setAttribute("aria-hidden", "true");
+                    separator.dataset.page = String(pages);
+
+                    editor.insertBefore(separator, child);
+                    usedHeight = height;
+                } else {
+                    usedHeight += height;
+                }
+            });
+
+            const pageCount = $("pageCount");
+            if (pageCount) {
+                pageCount.textContent = `Página 1 de ${pages}`;
+            }
+        } finally {
+            isPaginatingEditor = false;
+        }
+    }
+
+    const editorEl = $("paperEditor");
+
+    editorEl?.addEventListener("input", () => {
+        scheduleEditorPagination();
+    });
+
+    document.querySelector(".editor-toolbar")?.addEventListener("click", () => {
+        scheduleEditorPagination(120);
+    });
+
+    document.querySelector(".editor-toolbar")?.addEventListener("change", () => {
+        scheduleEditorPagination(120);
+    });
+
+    document.addEventListener("click", event => {
+        if (event.target.closest(".btn-template")) {
+            setTimeout(() => scheduleEditorPagination(0), 0);
+        }
+    });
+
+    window.addEventListener("resize", () => {
+        scheduleEditorPagination(120);
+    });
+
+    scheduleEditorPagination(0);
+
     async function saveMinuta() {
         const idProcesso = Number($("selectMinutaProcesso")?.value);
         const idCategoria = Number($("selectMinutaCategoria")?.value);
         const nome = $("docTitle")?.value.trim();
-        const conteudo = $("paperEditor")?.innerHTML || "";
+        const conteudo = getEditorCleanHtml();
 
         if (!idProcesso || !idCategoria || !nome) {
             return alertModal(
@@ -1495,7 +1592,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const idProcesso = Number($("selectMinutaProcesso")?.value);
         const idCategoria = Number($("selectMinutaCategoria")?.value);
         const nome = $("docTitle")?.value.trim();
-        const conteudo = $("paperEditor")?.innerHTML || "";
+        const conteudo = getEditorCleanHtml();
 
         if (!idProcesso || !idCategoria || !nome) {
             throw new Error(

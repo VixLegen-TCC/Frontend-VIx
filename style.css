@@ -2793,3 +2793,339 @@ body[data-theme="dark"] .process-record-link span {
     max-height: none;
     overflow: visible;
 }
+
+
+/* =========================================
+   EDITOR PAGINADO - VISUAL TIPO WORD
+   ========================================= */
+:root {
+    --editor-canvas-bg: var(--cor-banner);
+}
+
+.paper-page {
+    height: auto !important;
+    min-height: 1100px;
+    overflow: visible !important;
+    position: relative;
+}
+
+.editor-page-break {
+    position: relative;
+    display: block;
+    height: 30px;
+    margin: 58px -70px;
+    background: var(--editor-canvas-bg);
+    border-top: 1px solid rgba(0, 0, 0, .18);
+    border-bottom: 1px solid rgba(0, 0, 0, .18);
+    box-shadow:
+        0 -9px 15px rgba(0, 0, 0, .17),
+        0 9px 15px rgba(0, 0, 0, .17);
+    pointer-events: none;
+    user-select: none;
+}
+
+.editor-page-break::after {
+    content: "Página " attr(data-page);
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.12);
+    color: rgba(255,255,255,.78);
+    font-family: var(--fonte-corpo);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .03em;
+}
+
+.paper-page > .editor-page-break + * {
+    margin-top: 0 !important;
+}
+
+@media print {
+    .editor-page-break {
+        display: none !important;
+    }
+}
+
+/* =========================================
+   TEMA ESCURO COMPLETO
+   ========================================= */
+body[data-theme="dark"] {
+    --cor-fundo-geral: #151214;
+    --cor-fundo-main: #1d191b;
+    --cor-cartao: #2a2427;
+    --texto-escuro: #f4edf0;
+    --texto-claro: #ffffff;
+    --texto-mutado: #b8abad;
+    --cor-borda-card: #4a3d41;
+    --editor-canvas-bg: #141113;
+    background: var(--cor-fundo-geral);
+    color: var(--texto-escuro);
+}
+
+body[data-theme="dark"] .layout-container,
+body[data-theme="dark"] .main-content,
+body[data-theme="dark"] .app-section,
+body[data-theme="dark"] .records-page,
+body[data-theme="dark"] .notifications-page,
+body[data-theme="dark"] .entity-page,
+body[data-theme="dark"] .kanban-page,
+body[data-theme="dark"] .home-page,
+body[data-theme="dark"] .ai-page {
+    background: var(--cor-fundo-main) !important;
+    color: var(--texto-escuro);
+}
+
+body[data-theme="dark"] :is(
+    .page-title,
+    .entity-title,
+    .notifications-title,
+    .home-hero h1,
+    .home-panel h2,
+    .profile-identity h2,
+    .company-heading h2,
+    .entity-panel h3,
+    .kanban-column-header h2,
+    .task-card-title h3,
+    .notif-main h3,
+    .record-main strong,
+    .process-record-link strong,
+    .summary-item strong
+) {
+    color: #f7f1f3 !important;
+}
+
+body[data-theme="dark"] :is(
+    .records-header p,
+    .notifications-subtitle,
+    .entity-page-header p,
+    .home-hero p,
+    .profile-identity p,
+    .company-heading p,
+    .entity-detail-row span,
+    .task-card-description,
+    .notif-main p,
+    .notif-meta,
+    .record-main span,
+    .process-record-link span,
+    .home-empty,
+    .ai-context-panel > p,
+    .summary-label
+) {
+    color: #b9adb0 !important;
+}
+
+body[data-theme="dark"] :is(
+    .section-eyebrow,
+    .panel-kicker,
+    .notif-category
+) {
+    color: #d76b76 !important;
+}
+
+body[data-theme="dark"] :is(
+    .home-hero,
+    .home-panel,
+    .home-stat-card,
+    .records-card,
+    .entity-panel,
+    .profile-hero-card,
+    .company-overview-card,
+    .entity-footer-strip,
+    .kanban-column,
+    .task-card,
+    .notification-item,
+    .notifications-summary,
+    .ai-context-panel,
+    .chat-box,
+    .modal-card,
+    .modal-body
+) {
+    background: #2a2427 !important;
+    border-color: #43383c !important;
+    color: #f3ecee !important;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
+}
+
+body[data-theme="dark"] .notifications-summary {
+    background: #65191f !important;
+}
+
+body[data-theme="dark"] .notification-item.unread {
+    background: #31272a !important;
+    border-color: #6d3d43 !important;
+}
+
+body[data-theme="dark"] :is(
+    .home-shortcuts button,
+    .home-notif-item,
+    .ai-file-item,
+    .task-chip,
+    .records-table tbody tr,
+    .company-address-block,
+    .profile-tags > span
+) {
+    background: #332c2f !important;
+    border-color: #493d41 !important;
+    color: #eee6e8 !important;
+}
+
+body[data-theme="dark"] .records-table {
+    color: #eee6e8;
+}
+
+body[data-theme="dark"] .records-table thead th {
+    background: #251f22 !important;
+    color: #d5c9cc !important;
+    border-color: #42363a !important;
+}
+
+body[data-theme="dark"] .records-table tbody td {
+    color: #eee6e8 !important;
+    border-color: #3e3437 !important;
+}
+
+body[data-theme="dark"] .records-table tbody tr:hover {
+    background: #30282b !important;
+}
+
+body[data-theme="dark"] :is(
+    .records-search,
+    .records-filter,
+    .doc-context-select,
+    .doc-title-input,
+    .tool-select,
+    .modal-body input,
+    .modal-body select,
+    .modal-body textarea,
+    .chat-input-area textarea,
+    .auth-field input
+) {
+    background: #241f21 !important;
+    color: #f4edef !important;
+    border-color: #4a3d41 !important;
+}
+
+body[data-theme="dark"] :is(
+    .records-search input,
+    .records-search input::placeholder,
+    .chat-input-area textarea::placeholder,
+    .modal-body input::placeholder,
+    .modal-body textarea::placeholder
+) {
+    color: #a99ca0 !important;
+}
+
+body[data-theme="dark"] .editor-toolbar {
+    background: #272124 !important;
+    border-color: #44383c !important;
+}
+
+body[data-theme="dark"] .toolbar-group {
+    border-color: #4a3e42 !important;
+}
+
+body[data-theme="dark"] .tool-btn {
+    color: #ded3d6 !important;
+}
+
+body[data-theme="dark"] .tool-btn:hover {
+    background: #3b3034 !important;
+    border-color: #59484d !important;
+    color: #ffffff !important;
+}
+
+body[data-theme="dark"] .tool-btn.active,
+body[data-theme="dark"] .legal-tool {
+    background: #512d32 !important;
+    color: #ffdfe3 !important;
+    border-color: #714047 !important;
+}
+
+body[data-theme="dark"] :is(
+    .notif-action,
+    .notif-icon-btn,
+    .record-more-btn,
+    .record-icon-btn,
+    .entity-primary-action,
+    .entity-link-action
+) {
+    background: #352c2f !important;
+    color: #f3e9ec !important;
+    border-color: #55464b !important;
+}
+
+body[data-theme="dark"] :is(
+    .notif-filter,
+    .records-filter option
+) {
+    background: #332b2e !important;
+    color: #eadfe2 !important;
+    border-color: #514248 !important;
+}
+
+body[data-theme="dark"] .notif-filter.active {
+    background: var(--cor-primaria) !important;
+    color: #fff !important;
+}
+
+body[data-theme="dark"] .notif-symbol {
+    background: #382d31 !important;
+}
+
+body[data-theme="dark"] .modal-header {
+    background: #681b21 !important;
+}
+
+body[data-theme="dark"] .modal-footer {
+    background: #2a2427 !important;
+    border-color: #44383c !important;
+}
+
+body[data-theme="dark"] .kanban-dropzone {
+    background: transparent !important;
+}
+
+body[data-theme="dark"] .kanban-empty {
+    color: #9f9296 !important;
+    border-color: #4a3d41 !important;
+}
+
+body[data-theme="dark"] .editor-footer-metrics {
+    background: #282225 !important;
+    color: #d2c7ca !important;
+    box-shadow: 0 5px 14px rgba(0,0,0,.28);
+}
+
+body[data-theme="dark"] .ruler {
+    background: #393235 !important;
+    border-color: #51464a !important;
+}
+
+body[data-theme="dark"] .ruler-ticks {
+    opacity: .65;
+}
+
+/* O documento continua branco no modo escuro, como em editores de texto. */
+body[data-theme="dark"] .paper-page,
+body[data-theme="dark"] .paper-page *:not(.editor-page-break) {
+    color: #000 !important;
+}
+
+body[data-theme="dark"] .paper-page {
+    background: #fff !important;
+}
+
+body[data-theme="dark"] .editor-page-break {
+    background: var(--editor-canvas-bg) !important;
+}
+
+/* Logo correta para fundos escuros, sem filtros que distorcem o PNG. */
+body[data-theme="dark"] .brand-logo {
+    filter: none !important;
+    opacity: 1 !important;
+}
+
