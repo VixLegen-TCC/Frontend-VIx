@@ -13,7 +13,7 @@
     <!-- AUTENTICAÇÃO: LOGIN E CADASTRO -->
     <section class="auth-shell" id="authShell">
         <div class="auth-brand-panel">
-            <div class="auth-brand-mark"><h1>VL.</h1><i class="fa-regular fa-gem"></i></div>
+            <div class="auth-brand-mark"><img src="LogoVL_WHITE.png" alt="VixLegen" class="brand-logo brand-logo-auth"></div>
             <span class="auth-eyebrow">VIXLEGEN</span>
             <h2>Rotina jurídica organizada em um só ambiente.</h2>
             <p>Entre para acessar suas minutas, clientes, processos, tarefas e demais recursos do escritório.</p>
@@ -103,9 +103,7 @@
             </nav>
 
             <div class="logo">
-                <h2>VL.</h2>
-                <i class="fa-regular fa-gem diamond-icon"></i>
-                <span>VixLegen</span>
+                <img src="LogoVL_WHITE.png" alt="VixLegen" class="brand-logo brand-logo-sidebar">
             </div>
         </aside>
 
@@ -349,7 +347,7 @@
                         <div>
                             <span class="section-eyebrow">CENTRAL OPERACIONAL</span>
                             <h1 class="page-title notifications-title">Notificações</h1>
-                            <p class="notifications-subtitle">Prazos, tarefas e movimentações importantes do escritório em um só lugar.</p>
+                            <p class="notifications-subtitle">Avisos vinculados à sua conta, exibidos diretamente pelo backend.</p>
                         </div>
                         <button class="notif-read-all" id="btnMarcarTodasLidas" type="button">
                             <i class="fa-solid fa-check-double"></i>
@@ -360,132 +358,33 @@
                     <div class="notifications-summary">
                         <div class="summary-item">
                             <span class="summary-label">Não lidas</span>
-                            <strong id="notifUnreadCount">3</strong>
+                            <strong id="notifUnreadCount">0</strong>
                         </div>
                         <div class="summary-divider"></div>
                         <div class="summary-item">
-                            <span class="summary-label">Prazos críticos</span>
-                            <strong>1</strong>
+                            <span class="summary-label">Total</span>
+                            <strong id="notifTotalCount">0</strong>
                         </div>
                         <div class="summary-divider"></div>
                         <div class="summary-item">
-                            <span class="summary-label">Atualizações hoje</span>
-                            <strong>5</strong>
+                            <span class="summary-label">Hoje</span>
+                            <strong id="notifTodayCount">0</strong>
                         </div>
                     </div>
 
                     <div class="notifications-toolbar" aria-label="Filtros de notificações">
                         <button class="notif-filter active" type="button" data-filter="all">Todas</button>
-                        <button class="notif-filter" type="button" data-filter="prazo">Prazos</button>
-                        <button class="notif-filter" type="button" data-filter="tarefa">Tarefas</button>
-                        <button class="notif-filter" type="button" data-filter="processo">Processos</button>
-                        <button class="notif-filter" type="button" data-filter="documento">Documentos</button>
+                        <button class="notif-filter" type="button" data-filter="nao-lidas">Não lidas</button>
+                        <button class="notif-filter" type="button" data-filter="PENDENTE">Pendentes</button>
+                        <button class="notif-filter" type="button" data-filter="ENVIADA">Enviadas</button>
+                        <button class="notif-filter" type="button" data-filter="CANCELADA">Canceladas</button>
                     </div>
 
                     <div class="notifications-container" id="notificationsList">
-                        <article class="notification-item unread priority-high" data-type="prazo">
-                            <div class="notif-accent"></div>
-                            <div class="notif-symbol danger"><i class="fa-solid fa-hourglass-half"></i></div>
-                            <div class="notif-main">
-                                <div class="notif-heading-row">
-                                    <span class="notif-category">Prazo processual</span>
-                                    <span class="notif-unread-dot" title="Não lida"></span>
-                                </div>
-                                <h3>Prazo de manifestação vence em 2 dias</h3>
-                                <p>Processo 0001234-88.2026.8.26.0100 • CompanyJUS x Associados</p>
-                                <div class="notif-meta">
-                                    <span><i class="fa-regular fa-clock"></i> Hoje, 14:32</span>
-                                    <span class="deadline critical"><i class="fa-regular fa-calendar"></i> 02/10/2026</span>
-                                </div>
-                            </div>
-                            <div class="notif-actions">
-                                <button class="notif-action primary" type="button">Ver processo</button>
-                                <button class="notif-icon-btn mark-read" type="button" title="Marcar como lida"><i class="fa-regular fa-circle-check"></i></button>
-                            </div>
-                        </article>
-
-                        <article class="notification-item unread priority-medium" data-type="tarefa">
-                            <div class="notif-accent"></div>
-                            <div class="notif-symbol task"><i class="fa-solid fa-list-check"></i></div>
-                            <div class="notif-main">
-                                <div class="notif-heading-row">
-                                    <span class="notif-category">Nova tarefa</span>
-                                    <span class="notif-unread-dot" title="Não lida"></span>
-                                </div>
-                                <h3>Revisar minuta de contrato societário</h3>
-                                <p>Uma nova tarefa foi atribuída a você na área de Direito Empresarial.</p>
-                                <div class="notif-meta">
-                                    <span><i class="fa-regular fa-clock"></i> Hoje, 11:08</span>
-                                    <span class="deadline"><i class="fa-regular fa-calendar"></i> Até 06/10/2026</span>
-                                </div>
-                            </div>
-                            <div class="notif-actions">
-                                <button class="notif-action" type="button">Abrir tarefa</button>
-                                <button class="notif-icon-btn mark-read" type="button" title="Marcar como lida"><i class="fa-regular fa-circle-check"></i></button>
-                            </div>
-                        </article>
-
-                        <article class="notification-item unread" data-type="processo">
-                            <div class="notif-accent"></div>
-                            <div class="notif-symbol process"><i class="fa-solid fa-scale-balanced"></i></div>
-                            <div class="notif-main">
-                                <div class="notif-heading-row">
-                                    <span class="notif-category">Movimentação processual</span>
-                                    <span class="notif-unread-dot" title="Não lida"></span>
-                                </div>
-                                <h3>Nova decisão publicada no processo</h3>
-                                <p>O tribunal registrou uma nova movimentação. Consulte o andamento para conferir os detalhes.</p>
-                                <div class="notif-meta">
-                                    <span><i class="fa-regular fa-clock"></i> Hoje, 09:41</span>
-                                    <span><i class="fa-solid fa-building-columns"></i> TJSP</span>
-                                </div>
-                            </div>
-                            <div class="notif-actions">
-                                <button class="notif-action" type="button">Ver andamento</button>
-                                <button class="notif-icon-btn mark-read" type="button" title="Marcar como lida"><i class="fa-regular fa-circle-check"></i></button>
-                            </div>
-                        </article>
-
-                        <article class="notification-item" data-type="documento">
-                            <div class="notif-accent"></div>
-                            <div class="notif-symbol document"><i class="fa-solid fa-file-signature"></i></div>
-                            <div class="notif-main">
-                                <div class="notif-heading-row">
-                                    <span class="notif-category">Documento</span>
-                                </div>
-                                <h3>Procuração assinada pelo cliente</h3>
-                                <p>O documento “Procuração Ad Judicia” foi assinado e está disponível no processo.</p>
-                                <div class="notif-meta">
-                                    <span><i class="fa-regular fa-clock"></i> Ontem, 17:26</span>
-                                </div>
-                            </div>
-                            <div class="notif-actions">
-                                <button class="notif-action" type="button">Abrir documento</button>
-                            </div>
-                        </article>
-
-                        <article class="notification-item" data-type="processo">
-                            <div class="notif-accent"></div>
-                            <div class="notif-symbol success"><i class="fa-solid fa-circle-check"></i></div>
-                            <div class="notif-main">
-                                <div class="notif-heading-row">
-                                    <span class="notif-category">Processo concluído</span>
-                                </div>
-                                <h3>Processo marcado como finalizado</h3>
-                                <p>Todos os itens vinculados foram concluídos e o processo foi movido para o histórico.</p>
-                                <div class="notif-meta">
-                                    <span><i class="fa-regular fa-clock"></i> 28/09/2026, 16:04</span>
-                                </div>
-                            </div>
-                            <div class="notif-actions">
-                                <button class="notif-action" type="button">Ver histórico</button>
-                            </div>
-                        </article>
-
-                        <div class="notifications-empty" id="notificationsEmpty" hidden>
-                            <i class="fa-regular fa-bell-slash"></i>
-                            <strong>Nenhuma notificação nesta categoria</strong>
-                            <span>Tente selecionar outro filtro.</span>
+                        <div class="notifications-empty">
+                            <i class="fa-regular fa-bell"></i>
+                            <strong>Carregando notificações...</strong>
+                            <span>Aguarde um instante.</span>
                         </div>
                     </div>
                 </div>

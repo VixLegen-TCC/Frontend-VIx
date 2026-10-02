@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
         clientes: [],
         processos: [],
         tarefas: [],
+        notificacoes: [],
         status: new Map(),
         categoriasDocumento: [],
         documentoAtualId: null,
@@ -919,6 +920,212 @@ document.addEventListener("DOMContentLoaded", () => {
             : value;
     }
 
+    async function loadNotificacoes() {
+        if (!state.token) return;
+
+        state.notificacoes = await api("/notificacoes/minhas");
+        renderNotificacoes();
+    }
+
+    function renderNotificacoes() {
+        const container = $("notificationsList");
+        if (!container) return;
+
+        const activeFilter = document.querySelector(".notif-filter.active")?.dataset.filter || "all";
+
+        const filtradas = state.notificacoes.filter(notificacao => {
+            if (activeFilter === "all") return true;
+            if (activeFilter === "nao-lidas") return !notificacao.lida;
+            return notificacao.status === activeFilter;
+        });
+
+        const naoLidas = state.notificacoes.filter(n => !n.lida).length;
+        const hoje = new Date();
+        const hojeCount = state.notificacoes.filter(n => {
+            if (!n.dataEnvio) return false;
+            const d = new Date(n.dataEnvio);
+            return d.getFullYear() === hoje.getFullYear()
+                && d.getMonth() === hoje.getMonth()
+                && d.getDate() === hoje.getDate();
+        }).length;
+
+        setText("notifUnreadCount", naoLidas);
+        setText("notifTotalCount", state.notificacoes.length);
+        setText("notifTodayCount", hojeCount);
+
+        const badge = $("badgeNotifCount");
+        if (badge) {
+            badge.textContent = String(naoLidas);
+            badge.style.display = naoLidas > 0 ? "flex" : "none";
+        }
+
+        if (!filtradas.length) {
+            container.innerHTML = `
+                <div class="notifications-empty">
+                    <i class="fa-regular fa-bell-slash"></i>
+                    <strong>Nenhuma notificação neste filtro</strong>
+                    <span>Quando houver novidades, elas aparecerão aqui.</span>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = filtradas.map(notificacao => {
+            const unread = !notificacao.lida;
+            const status = notificacao.status || "PENDENTE";
+            const canal = notificacao.canal || "Sistema";
+            const icon = notificationIcon(canal, status);
+
+            return `
+                <article class="notification-item ${unread ? "unread" : ""}"
+                         data-notification-id="${notificacao.idNotificacao}">
+                    <div class="notif-accent"></div>
+                    <div class="notif-symbol ${notificationClass(canal, status)}">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="notif-main">
+                        <div class="notif-heading-row">
+                            <span class="notif-category">${escapeHtml(canal)}</span>
+                            ${unread ? '<span class="notif-unread-dot" title="Não lida"></span>' : ""}
+                        </div>
+                        <h3>${escapeHtml(notificationTitle(notificacao))}</h3>
+                        <p>${escapeHtml(notificacao.mensagem || "Sem detalhes.")}</p>
+                        <div class="notif-meta">
+                            <span><i class="fa-regular fa-clock"></i> ${escapeHtml(formatDateTime(notificacao.dataEnvio))}</span>
+                            <span>${escapeHtml(translateNotificationStatus(status))}</span>
+                        </div>
+                    </div>
+                    <div class="notif-actions">
+                        <button class="notif-action" type="button"
+                                data-notification-view="${notificacao.idNotificacao}">
+                            Ver detalhes
+                        </button>
+                        ${unread ? `
+                            <button class="notif-icon-btn" type="button"
+                                    data-notification-read="${notificacao.idNotificacao}"
+                                    title="Marcar como lida">
+                                <i class="fa-regular fa-circle-check"></i>
+                            </button>
+                        ` : ""}
+                    </div>
+                </article>
+            `;
+        }).join("");
+    }
+
+    document.querySelectorAll(".notif-filter").forEach(button => {
+        button.addEventListener("click", event => {
+            event.preventDefault();
+            document.querySelectorAll(".notif-filter")
+                .forEach(item => item.classList.remove("active"));
+            button.classList.add("active");
+            renderNotificacoes();
+        }, true);
+    });
+
+    $("btnMarcarTodasLidas")?.addEventListener("click", async event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        try {
+            await api("/notificacoes/minhas/lidas", {
+                method: "PATCH"
+            });
+
+            state.notificacoes.forEach(n => n.lida = true);
+            renderNotificacoes();
+        } catch (error) {
+            alertModal("Falha ao atualizar notificações", error.message);
+        }
+    }, true);
+
+    $("notificationsList")?.addEventListener("click", async event => {
+        const readButton = event.target.closest("[data-notification-read]");
+        const viewButton = event.target.closest("[data-notification-view]");
+
+        if (readButton) {
+            const id = Number(readButton.dataset.notificationRead);
+
+            try {
+                const atualizada = await api(`/notificacoes/${id}/lida`, {
+                    method: "PATCH"
+                });
+
+                const index = state.notificacoes.findIndex(n => n.idNotificacao === id);
+                if (index >= 0) state.notificacoes[index] = atualizada;
+                renderNotificacoes();
+            } catch (error) {
+                alertModal("Falha ao atualizar notificação", error.message);
+            }
+
+            return;
+        }
+
+        if (viewButton) {
+            const id = Number(viewButton.dataset.notificationView);
+            const notificacao = state.notificacoes.find(n => n.idNotificacao === id);
+            if (!notificacao) return;
+
+            $("detalhesTitulo").innerHTML = '<i class="fa-regular fa-bell"></i> Notificação';
+            $("detalhesConteudo").innerHTML =
+                detail("Canal", notificacao.canal) +
+                detail("Status", translateNotificationStatus(notificacao.status)) +
+                detail("Data", formatDateTime(notificacao.dataEnvio)) +
+                detail("Mensagem", notificacao.mensagem);
+
+            openModal("modalDetalhesRegistro");
+
+            if (!notificacao.lida) {
+                try {
+                    const atualizada = await api(`/notificacoes/${id}/lida`, {
+                        method: "PATCH"
+                    });
+                    const index = state.notificacoes.findIndex(n => n.idNotificacao === id);
+                    if (index >= 0) state.notificacoes[index] = atualizada;
+                    renderNotificacoes();
+                } catch (_) {}
+            }
+        }
+    });
+
+    function notificationTitle(notificacao) {
+        const mensagem = (notificacao.mensagem || "").trim();
+        if (!mensagem) return "Nova notificação";
+
+        const primeiraFrase = mensagem.split(/[.!?]/)[0].trim();
+        return primeiraFrase.length > 70
+            ? primeiraFrase.slice(0, 67) + "..."
+            : primeiraFrase;
+    }
+
+    function notificationIcon(canal, status) {
+        const texto = `${canal} ${status}`.toLowerCase();
+
+        if (texto.includes("prazo")) return "fa-regular fa-calendar";
+        if (texto.includes("tarefa")) return "fa-solid fa-list-check";
+        if (texto.includes("process")) return "fa-solid fa-scale-balanced";
+        if (texto.includes("document")) return "fa-solid fa-file-lines";
+        if (status === "CANCELADA") return "fa-solid fa-ban";
+        return "fa-regular fa-bell";
+    }
+
+    function notificationClass(canal, status) {
+        if (status === "CANCELADA") return "danger";
+        const texto = (canal || "").toLowerCase();
+        if (texto.includes("tarefa")) return "task";
+        if (texto.includes("process")) return "process";
+        if (texto.includes("document")) return "document";
+        return status === "ENVIADA" ? "success" : "";
+    }
+
+    function translateNotificationStatus(status) {
+        return ({
+            PENDENTE: "Pendente",
+            ENVIADA: "Enviada",
+            CANCELADA: "Cancelada"
+        })[status] || status || "—";
+    }
+
     async function loadCategoriasDocumento() {
         if (!state.token) return;
         state.categoriasDocumento = await api("/categorias-documento");
@@ -931,7 +1138,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 .map(c => `<option value="${c.codigoCategoriaDocumento}">${escapeHtml(c.descricao)}</option>`)
                 .join("");
 
-        if (state.categoriasDocumento.length === 1) {
+        if (!state.categoriasDocumento.length) {
+            select.innerHTML = '<option value="">Nenhuma categoria cadastrada</option>';
+            select.disabled = true;
+            return;
+        }
+
+        select.disabled = false;
+
+        const preferida = state.categoriasDocumento.find(c =>
+            /peti[cç][aã]o inicial/i.test(c.descricao || "")
+        );
+
+        if (preferida) {
+            select.value = String(preferida.codigoCategoriaDocumento);
+        } else {
             select.value = String(state.categoriasDocumento[0].codigoCategoriaDocumento);
         }
     }
@@ -971,29 +1192,97 @@ document.addEventListener("DOMContentLoaded", () => {
         const payload = {
             nome,
             conteudo,
-            arquivo: null,
             tipoArquivo: "text/html",
             tamanhoArquivo: new Blob([conteudo]).size,
-            processo: { idProcesso },
-            categoriaDocumento: { codigoCategoriaDocumento: idCategoria }
+            processoId: idProcesso,
+            categoriaDocumentoId: idCategoria
         };
 
         try {
-            const documento = state.documentoAtualId
-                ? await api(`/documentos/${state.documentoAtualId}`, {
-                    method: "PUT",
-                    body: JSON.stringify(payload)
-                })
-                : await api("/documentos", {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                });
-
-            state.documentoAtualId = documento.idDocumento;
-            alertModal("Minuta guardada", `Documento #${documento.idDocumento} salvo no banco.`);
+            const documento = await saveMinutaSilenciosa();
+            alertModal(
+                "Minuta guardada",
+                `Documento #${documento.idDocumento} salvo com a formatação editável.`
+            );
         } catch (error) {
             alertModal("Falha ao salvar minuta", error.message);
         }
+    }
+
+    async function exportarPdfMinuta() {
+        try {
+            await saveMinutaSilenciosa();
+
+            if (!state.documentoAtualId) {
+                throw new Error("Salve a minuta antes de exportar o PDF.");
+            }
+
+            const response = await fetch(
+                `${API_BASE}/documentos/${state.documentoAtualId}/pdf`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${state.token}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Erro HTTP ${response.status} ao gerar PDF`);
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const nomeBase = ($("docTitle")?.value || "minuta")
+                .trim()
+                .replace(/[^a-zA-Z0-9._-]+/g, "_");
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${nomeBase}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        } catch (error) {
+            alertModal("Falha ao exportar PDF", error.message);
+        }
+    }
+
+    async function saveMinutaSilenciosa() {
+        const idProcesso = Number($("selectMinutaProcesso")?.value);
+        const idCategoria = Number($("selectMinutaCategoria")?.value);
+        const nome = $("docTitle")?.value.trim();
+        const conteudo = $("paperEditor")?.innerHTML || "";
+
+        if (!idProcesso || !idCategoria || !nome) {
+            throw new Error(
+                "Selecione processo, categoria e informe o nome da minuta."
+            );
+        }
+
+        const payload = {
+            nome,
+            conteudo,
+            tipoArquivo: "text/html",
+            tamanhoArquivo: new Blob([conteudo]).size,
+            processoId: idProcesso,
+            categoriaDocumentoId: idCategoria
+        };
+
+        const documento = state.documentoAtualId
+            ? await api(`/documentos/${state.documentoAtualId}`, {
+                method: "PUT",
+                body: JSON.stringify(payload)
+            })
+            : await api("/documentos", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+
+        state.documentoAtualId = documento.idDocumento;
+
+        return documento;
     }
 
     // Captura antes do listener antigo que apenas exibia sucesso sem persistir.
@@ -1003,6 +1292,26 @@ document.addEventListener("DOMContentLoaded", () => {
             event.stopPropagation();
             event.stopImmediatePropagation();
             saveMinuta();
+            return;
+        }
+
+        if (event.target.closest("#btnExportPDF")) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            exportarPdfMinuta();
+            return;
+        }
+
+        if (event.target.closest(".modal-close") ||
+            event.target.closest("#btnFecharDetalhes") ||
+            event.target.closest("#btnFecharAlerta")) {
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            closeModals();
+            return;
         }
 
         if (event.target.closest("#btnConfirmarSair")) {
@@ -1021,6 +1330,7 @@ document.addEventListener("DOMContentLoaded", () => {
             loadClientes(),
             loadProcessos(),
             loadTarefas(),
+            loadNotificacoes(),
             loadCategoriasDocumento()
         ]);
 
