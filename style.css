@@ -1542,3 +1542,23 @@ body {
     .auth-field.wide, .auth-form-grid > .wide, .form-field.wide { grid-column: auto; }
     .records-footer { flex-direction: column; }
 }
+
+
+.record-more-btn {
+    min-height: 31px;
+    padding: 0 11px;
+    border: 1px solid #d9ced0;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--cor-primaria);
+    font-family: var(--fonte-corpo);
+    font-size: 9.5px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.record-more-btn i { margin-right: 5px; }
+.record-more-btn:hover {
+    border-color: #c8aeb2;
+    background: #fbf4f5;
+}
