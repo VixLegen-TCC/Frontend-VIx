@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
         usuario: JSON.parse(localStorage.getItem("vixlegen_usuario") || "null"),
         clientes: [],
         processos: [],
+        tarefas: [],
         status: new Map(),
         categoriasDocumento: [],
         documentoAtualId: null,
@@ -37,6 +38,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     .map(([campo, valor]) => `${campo}: ${valor}`)
                     .join(" • ");
                 message = campos || "Requisição inválida";
+            }
+
+            if (response.status === 403 && (!message || message === "Forbidden")) {
+                message = "Seu perfil não possui permissão para executar esta ação.";
             }
 
             const error = new Error(
@@ -535,6 +540,385 @@ document.addEventListener("DOMContentLoaded", () => {
         if (el) el.textContent = value ?? "—";
     }
 
+    async function loadTarefas() {
+        if (!state.token) return;
+        state.tarefas = await api("/tarefas");
+        renderTarefas();
+    }
+
+    function renderTarefas() {
+        const query = ($("buscaTarefas")?.value || "").trim().toLowerCase();
+        const prioridade = $("filtroPrioridadeTarefa")?.value || "";
+
+        const filtradas = state.tarefas.filter(tarefa => {
+            const texto = [
+                tarefa.tipoTarefa,
+                tarefa.descricao,
+                tarefa.processo?.numeroProcesso,
+                tarefa.processo?.cliente?.nomeCompleto
+            ].filter(Boolean).join(" ").toLowerCase();
+
+            return texto.includes(query)
+                && (!prioridade || (tarefa.prioridade || "MEDIA") === prioridade);
+        });
+
+        const grupos = {
+            PENDENTE: [],
+            EM_ANDAMENTO: [],
+            CONCLUIDA: []
+        };
+
+        filtradas.forEach(tarefa => {
+            const status = tarefa.status === "ATRASADA"
+                ? "PENDENTE"
+                : tarefa.status;
+
+            (grupos[status] || grupos.PENDENTE).push(tarefa);
+        });
+
+        renderTarefaColumn("kanbanPendente", grupos.PENDENTE);
+        renderTarefaColumn("kanbanAndamento", grupos.EM_ANDAMENTO);
+        renderTarefaColumn("kanbanConcluida", grupos.CONCLUIDA);
+
+        setText("countPendente", grupos.PENDENTE.length);
+        setText("countAndamento", grupos.EM_ANDAMENTO.length);
+        setText("countConcluida", grupos.CONCLUIDA.length);
+
+        bindTaskDrag();
+    }
+
+    function renderTarefaColumn(id, tarefas) {
+        const container = $(id);
+        if (!container) return;
+
+        if (!tarefas.length) {
+            container.innerHTML = '<div class="kanban-empty">Solte um card aqui ou crie uma nova tarefa.</div>';
+            return;
+        }
+
+        container.innerHTML = tarefas
+            .sort((a, b) => new Date(a.prazo) - new Date(b.prazo))
+            .map(tarefa => taskCardHtml(tarefa))
+            .join("");
+    }
+
+    function taskCardHtml(tarefa) {
+        const prioridade = tarefa.prioridade || "MEDIA";
+        const processo = tarefa.processo?.numeroProcesso || "Sem processo";
+        const prazo = formatDateTime(tarefa.prazo);
+        const atrasada = tarefa.status === "ATRASADA"
+            || (tarefa.status !== "CONCLUIDA" && new Date(tarefa.prazo) < new Date());
+
+        return `
+            <article class="task-card priority-${prioridade}"
+                     draggable="true"
+                     data-task-id="${tarefa.idTarefa}">
+                <div class="task-card-head">
+                    <div class="task-card-title">
+                        <h3>${escapeHtml(tarefa.tipoTarefa)}</h3>
+                    </div>
+                    <div class="task-card-actions">
+                        <button class="task-card-action"
+                                type="button"
+                                data-task-edit="${tarefa.idTarefa}"
+                                title="Editar card">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                        </button>
+                        <button class="task-card-action"
+                                type="button"
+                                data-task-delete="${tarefa.idTarefa}"
+                                title="Excluir card">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+                ${tarefa.descricao
+                    ? `<p class="task-card-description">${escapeHtml(tarefa.descricao)}</p>`
+                    : ""}
+                <div class="task-card-meta">
+                    <span class="task-chip priority-${prioridade}">
+                        <i class="fa-solid fa-flag"></i>
+                        ${translatePrioridade(prioridade)}
+                    </span>
+                    <span class="task-chip">
+                        <i class="fa-regular fa-calendar"></i>
+                        ${escapeHtml(prazo)}
+                    </span>
+                    <span class="task-chip">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        ${escapeHtml(processo)}
+                    </span>
+                    ${atrasada
+                        ? '<span class="task-chip priority-URGENTE"><i class="fa-solid fa-triangle-exclamation"></i> Atrasada</span>'
+                        : ""}
+                </div>
+            </article>
+        `;
+    }
+
+    function bindTaskDrag() {
+        document.querySelectorAll(".task-card").forEach(card => {
+            card.addEventListener("dragstart", event => {
+                card.classList.add("dragging");
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", card.dataset.taskId);
+            });
+
+            card.addEventListener("dragend", () => {
+                card.classList.remove("dragging");
+                document.querySelectorAll(".kanban-dropzone")
+                    .forEach(zone => zone.classList.remove("drag-over"));
+            });
+        });
+    }
+
+    document.querySelectorAll(".kanban-dropzone").forEach(zone => {
+        zone.addEventListener("dragover", event => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            zone.classList.add("drag-over");
+        });
+
+        zone.addEventListener("dragleave", event => {
+            if (!zone.contains(event.relatedTarget)) {
+                zone.classList.remove("drag-over");
+            }
+        });
+
+        zone.addEventListener("drop", async event => {
+            event.preventDefault();
+            zone.classList.remove("drag-over");
+
+            const id = Number(event.dataTransfer.getData("text/plain"));
+            const tarefa = state.tarefas.find(item => item.idTarefa === id);
+            const novoStatus = zone.dataset.status;
+
+            if (!tarefa || !novoStatus || tarefa.status === novoStatus) return;
+
+            const statusAnterior = tarefa.status;
+            tarefa.status = novoStatus;
+            renderTarefas();
+
+            try {
+                const atualizada = await api(`/tarefas/${id}/status`, {
+                    method: "PATCH",
+                    body: JSON.stringify({ status: novoStatus })
+                });
+
+                const index = state.tarefas.findIndex(item => item.idTarefa === id);
+                if (index >= 0) state.tarefas[index] = atualizada;
+                renderTarefas();
+            } catch (error) {
+                tarefa.status = statusAnterior;
+                renderTarefas();
+                alertModal("Não foi possível mover o card", error.message);
+            }
+        });
+    });
+
+    $("buscaTarefas")?.addEventListener("input", renderTarefas);
+    $("filtroPrioridadeTarefa")?.addEventListener("change", renderTarefas);
+
+    function preencherProcessosTarefa(selected = "") {
+        const select = $("selectProcessoTarefa");
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Selecione um processo</option>' +
+            state.processos.map(processo =>
+                `<option value="${processo.idProcesso}">
+                    ${escapeHtml(processo.numeroProcesso)}
+                    ${processo.cliente?.nomeCompleto
+                        ? " — " + escapeHtml(processo.cliente.nomeCompleto)
+                        : ""}
+                </option>`
+            ).join("");
+
+        select.value = selected ? String(selected) : "";
+    }
+
+    function abrirNovaTarefa() {
+        $("tarefaIdEdicao").value = "";
+        $("tituloModalTarefa").innerHTML = '<i class="fa-solid fa-note-sticky"></i> Novo Card';
+        $("inputTituloTarefa").value = "";
+        $("inputDescricaoTarefa").value = "";
+        $("selectPrioridadeTarefa").value = "MEDIA";
+        $("selectStatusTarefa").value = "PENDENTE";
+        $("btnExcluirTarefa").classList.add("task-delete-hidden");
+        preencherProcessosTarefa();
+
+        const prazo = new Date();
+        prazo.setDate(prazo.getDate() + 1);
+        prazo.setHours(18, 0, 0, 0);
+        $("inputPrazoTarefa").value = toDateTimeLocal(prazo);
+
+        openModal("modalNovaTarefa");
+    }
+
+    function abrirEditarTarefa(id) {
+        const tarefa = state.tarefas.find(item => item.idTarefa === id);
+        if (!tarefa) return;
+
+        $("tarefaIdEdicao").value = String(tarefa.idTarefa);
+        $("tituloModalTarefa").innerHTML = '<i class="fa-regular fa-pen-to-square"></i> Editar Card';
+        $("inputTituloTarefa").value = tarefa.tipoTarefa || "";
+        $("inputDescricaoTarefa").value = tarefa.descricao || "";
+        $("inputPrazoTarefa").value = toDateTimeLocal(new Date(tarefa.prazo));
+        $("selectPrioridadeTarefa").value = tarefa.prioridade || "MEDIA";
+        $("selectStatusTarefa").value = tarefa.status === "ATRASADA" ? "PENDENTE" : tarefa.status;
+        preencherProcessosTarefa(tarefa.processo?.idProcesso);
+        $("btnExcluirTarefa").classList.remove("task-delete-hidden");
+
+        openModal("modalNovaTarefa");
+    }
+
+    async function salvarTarefa() {
+        const id = Number($("tarefaIdEdicao")?.value || 0);
+        const titulo = $("inputTituloTarefa").value.trim();
+        const descricao = $("inputDescricaoTarefa").value.trim();
+        const prazo = $("inputPrazoTarefa").value;
+        const processoId = Number($("selectProcessoTarefa").value);
+
+        if (!titulo || !prazo || !processoId) {
+            return alertModal(
+                "Dados incompletos",
+                "Informe título, prazo e processo para salvar o card."
+            );
+        }
+
+        const payload = {
+            tipoTarefa: titulo,
+            descricao: descricao || null,
+            prazo: localInputToIso(prazo),
+            status: $("selectStatusTarefa").value,
+            prioridade: $("selectPrioridadeTarefa").value,
+            processoId,
+            usuarioResponsavelId: state.usuario?.idUsuario
+        };
+
+        try {
+            if (id) {
+                await api(`/tarefas/${id}`, {
+                    method: "PUT",
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                await api("/tarefas", {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            closeModals();
+            await loadTarefas();
+        } catch (error) {
+            alertModal(
+                id ? "Falha ao editar card" : "Falha ao criar card",
+                error.message
+            );
+        }
+    }
+
+    async function excluirTarefa(id) {
+        if (!id) return;
+        if (!confirm("Excluir este card permanentemente?")) return;
+
+        try {
+            await api(`/tarefas/${id}`, {
+                method: "DELETE"
+            });
+
+            closeModals();
+            await loadTarefas();
+        } catch (error) {
+            alertModal(
+                "Não foi possível excluir o card",
+                error.message
+            );
+        }
+    }
+
+    // Captura os controles de tarefa antes dos listeners antigos do protótipo.
+    document.addEventListener("click", event => {
+        const novo = event.target.closest("#btnNovaTarefa");
+        const salvar = event.target.closest("#btnConfirmarTarefa");
+        const excluirModal = event.target.closest("#btnExcluirTarefa");
+        const editarCard = event.target.closest("[data-task-edit]");
+        const excluirCard = event.target.closest("[data-task-delete]");
+
+        if (novo) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            abrirNovaTarefa();
+            return;
+        }
+
+        if (salvar) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            salvarTarefa();
+            return;
+        }
+
+        if (excluirModal) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            excluirTarefa(Number($("tarefaIdEdicao").value));
+            return;
+        }
+
+        if (editarCard) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            abrirEditarTarefa(Number(editarCard.dataset.taskEdit));
+            return;
+        }
+
+        if (excluirCard) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            excluirTarefa(Number(excluirCard.dataset.taskDelete));
+        }
+    }, true);
+
+    function translatePrioridade(value) {
+        return ({
+            BAIXA: "Baixa",
+            MEDIA: "Média",
+            ALTA: "Alta",
+            URGENTE: "Urgente"
+        })[value] || "Média";
+    }
+
+    function formatDateTime(value) {
+        if (!value) return "Sem prazo";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+
+        return date.toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    }
+
+    function toDateTimeLocal(date) {
+        const pad = value => String(value).padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function localInputToIso(value) {
+        return value.length === 16
+            ? `${value}:00`
+            : value;
+    }
+
     async function loadCategoriasDocumento() {
         if (!state.token) return;
         state.categoriasDocumento = await api("/categorias-documento");
@@ -636,6 +1020,7 @@ document.addEventListener("DOMContentLoaded", () => {
             loadPerfil(),
             loadClientes(),
             loadProcessos(),
+            loadTarefas(),
             loadCategoriasDocumento()
         ]);
 
