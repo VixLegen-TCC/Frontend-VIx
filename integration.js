@@ -1,9 +1,24 @@
 document.addEventListener("DOMContentLoaded", () => {
     const API_BASE = window.VIXLEGEN_API_URL || "http://localhost:8080";
 
+    // Usuário local de demonstração. A autenticação deste perfil acontece
+    // inteiramente no frontend e não realiza requisição ao backend.
+    const LOCAL_ADMIN = Object.freeze({
+        email: "admin@VixLegend",
+        senha: "Vix@2026",
+        usuario: {
+            idUsuario: 0,
+            nome: "Administrador Local",
+            email: "admin@VixLegend",
+            codigoCategoria: 1,
+            nivelAcesso: 1
+        }
+    });
+
     const state = {
         token: localStorage.getItem("vixlegen_token") || "",
         usuario: JSON.parse(localStorage.getItem("vixlegen_usuario") || "null"),
+        localAdmin: localStorage.getItem("vixlegen_local_admin") === "1",
         clientes: [],
         processos: [],
         tarefas: [],
@@ -18,6 +33,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const $ = (id) => document.getElementById(id);
 
     async function api(path, options = {}) {
+        if (state.localAdmin) {
+            const error = new Error(
+                "O usuário administrativo local funciona sem conexão com o backend."
+            );
+            error.status = 0;
+            throw error;
+        }
+
         const headers = new Headers(options.headers || {});
         if (options.body && !headers.has("Content-Type")) {
             headers.set("Content-Type", "application/json");
@@ -154,6 +177,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function saveSession(data) {
+        state.localAdmin = false;
+        localStorage.removeItem("vixlegen_local_admin");
+
         state.token = data.token;
         state.usuario = {
             idUsuario: data.idUsuario,
@@ -166,12 +192,61 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("vixlegen_usuario", JSON.stringify(state.usuario));
     }
 
+    function saveLocalAdminSession() {
+        state.localAdmin = true;
+        state.token = "";
+        state.usuario = { ...LOCAL_ADMIN.usuario };
+        state.usuarioDetalhado = {
+            primeiroNome: "Administrador",
+            ultimoNome: "Local",
+            email: LOCAL_ADMIN.email,
+            telefone: null,
+            cpf: null,
+            rg: null,
+            numeroOAB: null,
+            dataNascimento: null,
+            empresa: "VixLegen",
+            cidade: null,
+            estado: null,
+            cep: null
+        };
+
+        localStorage.removeItem("vixlegen_token");
+        localStorage.setItem("vixlegen_local_admin", "1");
+        localStorage.setItem(
+            "vixlegen_usuario",
+            JSON.stringify(state.usuario)
+        );
+    }
+
+    function hydrateLocalAdminUi() {
+        state.clientes = [];
+        state.processos = [];
+        state.tarefas = [];
+        state.notificacoes = [];
+        state.status.clear();
+        state.categoriasDocumento = [];
+        state.documentoAtualId = null;
+
+        renderClientes();
+        renderProcessos();
+        renderTarefas();
+        renderNotificacoes();
+        fillClienteSelect();
+        fillProcessoSelect();
+        renderPerfilEmpresa();
+        atualizarHome();
+    }
+
     function clearSession() {
         state.token = "";
         state.usuario = null;
+        state.localAdmin = false;
+        state.usuarioDetalhado = null;
         state.documentoAtualId = null;
         localStorage.removeItem("vixlegen_token");
         localStorage.removeItem("vixlegen_usuario");
+        localStorage.removeItem("vixlegen_local_admin");
     }
 
     $("btnIrCadastro")?.addEventListener("click", () => showAuth("cadastro"));
@@ -182,12 +257,32 @@ document.addEventListener("DOMContentLoaded", () => {
         const errorEl = $("loginErro");
         if (errorEl) errorEl.hidden = true;
 
+        const email = $("loginEmail").value.trim();
+        const senha = $("loginSenha").value;
+
+        // O e-mail administrativo é tratado 100% localmente:
+        // até uma senha incorreta não dispara chamada ao backend.
+        if (email.toLowerCase() === LOCAL_ADMIN.email.toLowerCase()) {
+            if (senha !== LOCAL_ADMIN.senha) {
+                if (errorEl) {
+                    errorEl.textContent = "E-mail ou senha inválidos.";
+                    errorEl.hidden = false;
+                }
+                return;
+            }
+
+            saveLocalAdminSession();
+            showApp();
+            hydrateLocalAdminUi();
+            return;
+        }
+
         try {
             const data = await api("/auth/login", {
                 method: "POST",
                 body: JSON.stringify({
-                    email: $("loginEmail").value.trim(),
-                    senha: $("loginSenha").value
+                    email,
+                    senha
                 })
             });
 
@@ -1794,7 +1889,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return `<div class="detail-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value ?? "—")}</strong></div>`;
     }
 
-    if (state.token && state.usuario) {
+    if (state.localAdmin && state.usuario) {
+        saveLocalAdminSession();
+        showApp();
+        hydrateLocalAdminUi();
+    } else if (state.token && state.usuario) {
         showApp();
         loadAll();
     } else {
