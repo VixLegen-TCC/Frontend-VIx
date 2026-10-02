@@ -11,7 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
         status: new Map(),
         categoriasDocumento: [],
         documentoAtualId: null,
-        usuarioDetalhado: null
+        usuarioDetalhado: null,
+        aiFiles: []
     };
 
     const $ = (id) => document.getElementById(id);
@@ -89,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function showApp() {
         $("authShell")?.classList.add("auth-hidden");
         $("appLayout")?.classList.remove("auth-hidden");
+        document.querySelector('[data-target="sec-home"]')?.click();
     }
 
     function saveSession(data) {
@@ -333,7 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body.innerHTML = items.length
             ? items.map(p => `
                 <tr>
-                    <td><div class="record-main"><strong>${escapeHtml(p.numeroProcesso)}</strong><span>ID #${p.idProcesso}${p.segredoJustica ? " • Segredo de justiça" : ""}</span></div></td>
+                    <td><button class="process-record-link" type="button" data-processo-editor="${p.idProcesso}"><strong>${escapeHtml(p.numeroProcesso)}</strong><span>ID #${p.idProcesso}${p.segredoJustica ? " • Segredo de justiça" : ""}</span></button></td>
                     <td>${escapeHtml(p.cliente?.nomeCompleto || "—")}</td>
                     <td>${escapeHtml(p.tribunal || "—")}</td>
                     <td>${escapeHtml(p.comarca || "—")}</td>
@@ -425,8 +427,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (editor) {
-            $("selectMinutaProcesso").value = String(editor.dataset.processoEditor);
-            state.documentoAtualId = null;
+            const idProcesso = Number(editor.dataset.processoEditor);
+            $("selectMinutaProcesso").value = String(idProcesso);
+            await abrirProcessoNoEditor(idProcesso);
             document.querySelector('[data-target="sec-editor"]')?.click();
         }
 
@@ -1126,6 +1129,190 @@ document.addEventListener("DOMContentLoaded", () => {
         })[status] || status || "—";
     }
 
+    function atualizarHome() {
+        setText("homeProcessosCount", state.processos.length);
+        setText("homeClientesCount", state.clientes.length);
+        setText(
+            "homeTarefasCount",
+            state.tarefas.filter(t => t.status !== "CONCLUIDA").length
+        );
+
+        const naoLidas = state.notificacoes.filter(n => !n.lida).length;
+        setText("homeNotifCount", naoLidas);
+
+        const preview = $("homeNotificationsPreview");
+        if (!preview) return;
+
+        const ultimas = state.notificacoes.slice(0, 3);
+
+        preview.innerHTML = ultimas.length
+            ? ultimas.map(n => `
+                <div class="home-notif-item">
+                    <i class="fa-regular fa-bell"></i>
+                    <div>
+                        <strong>${escapeHtml(n.canal || "Sistema")}</strong>
+                        <span>${escapeHtml(n.mensagem || "Nova notificação")}</span>
+                    </div>
+                </div>
+            `).join("")
+            : '<div class="home-empty">Nenhuma notificação disponível.</div>';
+    }
+
+    const temaSalvo = localStorage.getItem("vixlegen_theme") || "light";
+    aplicarTema(temaSalvo);
+
+    $("btnTema")?.addEventListener("click", () => {
+        const proximo = document.body.dataset.theme === "dark"
+            ? "light"
+            : "dark";
+
+        aplicarTema(proximo);
+    });
+
+    $("btnTema")?.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            $("btnTema").click();
+        }
+    });
+
+    function aplicarTema(tema) {
+        document.body.dataset.theme = tema;
+        localStorage.setItem("vixlegen_theme", tema);
+
+        const icon = $("iconeTema");
+        if (icon) {
+            icon.className = tema === "dark"
+                ? "fa-solid fa-sun"
+                : "fa-solid fa-moon";
+        }
+
+        const btn = $("btnTema");
+        if (btn) {
+            btn.dataset.tooltip = tema === "dark"
+                ? "Usar tema claro"
+                : "Usar tema escuro";
+        }
+    }
+
+    $("btnAnexarIa")?.addEventListener("click", () => {
+        $("aiFileInput")?.click();
+    });
+
+    $("aiFileInput")?.addEventListener("change", event => {
+        const novos = Array.from(event.target.files || []);
+
+        novos.forEach(file => {
+            const key = `${file.name}-${file.size}-${file.lastModified}`;
+
+            if (!state.aiFiles.some(item => item.key === key)) {
+                state.aiFiles.push({ key, file });
+            }
+        });
+
+        event.target.value = "";
+        renderIaFiles();
+    });
+
+    $("aiFilesList")?.addEventListener("click", event => {
+        const remove = event.target.closest("[data-ai-file-remove]");
+        if (!remove) return;
+
+        state.aiFiles = state.aiFiles.filter(
+            item => item.key !== remove.dataset.aiFileRemove
+        );
+
+        renderIaFiles();
+    });
+
+    function renderIaFiles() {
+        const list = $("aiFilesList");
+        const summary = $("aiAttachedSummary");
+        if (!list) return;
+
+        if (!state.aiFiles.length) {
+            list.innerHTML = '<div class="ai-file-empty">Nenhum arquivo anexado.</div>';
+            if (summary) {
+                summary.hidden = true;
+                summary.textContent = "";
+            }
+            return;
+        }
+
+        list.innerHTML = state.aiFiles.map(item => `
+            <div class="ai-file-item">
+                <i class="fa-regular fa-file-lines"></i>
+                <div>
+                    <strong>${escapeHtml(item.file.name)}</strong>
+                    <span>${formatFileSize(item.file.size)}</span>
+                </div>
+                <button class="ai-file-remove"
+                        type="button"
+                        data-ai-file-remove="${escapeHtml(item.key)}"
+                        title="Remover arquivo">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        `).join("");
+
+        if (summary) {
+            summary.hidden = false;
+            summary.textContent =
+                `${state.aiFiles.length} arquivo(s) anexado(s) à conversa.`;
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    $("btnEnviarChat")?.addEventListener("click", enviarMensagemIa);
+
+    $("chatInput")?.addEventListener("keydown", event => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            enviarMensagemIa();
+        }
+    });
+
+    function enviarMensagemIa() {
+        const input = $("chatInput");
+        const mensagens = $("chatMessages");
+        const texto = input?.value.trim();
+
+        if (!texto && !state.aiFiles.length) return;
+
+        const anexos = state.aiFiles.length
+            ? `<div class="chat-attachments">${state.aiFiles.map(item =>
+                `<span><i class="fa-regular fa-file"></i> ${escapeHtml(item.file.name)}</span>`
+              ).join("")}</div>`
+            : "";
+
+        mensagens?.insertAdjacentHTML(
+            "beforeend",
+            `
+                <div class="chat-msg user">
+                    <div>
+                        ${texto ? `<p>${escapeHtml(texto)}</p>` : ""}
+                        ${anexos}
+                    </div>
+                </div>
+                <div class="chat-msg ai">
+                    <i class="fa-solid fa-robot"></i>
+                    <p>Contexto recebido. A análise automática dos arquivos será executada quando o provedor de IA estiver conectado ao backend.</p>
+                </div>
+            `
+        );
+
+        if (input) input.value = "";
+        mensagens?.scrollTo({
+            top: mensagens.scrollHeight,
+            behavior: "smooth"
+        });
+    }
+
     async function loadCategoriasDocumento() {
         if (!state.token) return;
         state.categoriasDocumento = await api("/categorias-documento");
@@ -1172,9 +1359,64 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    $("selectMinutaProcesso")?.addEventListener("change", () => {
-        state.documentoAtualId = null;
+    $("selectMinutaProcesso")?.addEventListener("change", async event => {
+        const idProcesso = Number(event.target.value);
+
+        if (!idProcesso) {
+            state.documentoAtualId = null;
+            return;
+        }
+
+        await abrirProcessoNoEditor(idProcesso);
     });
+
+    async function abrirProcessoNoEditor(idProcesso) {
+        if (!idProcesso) return;
+
+        try {
+            const documentos = await api(`/documentos/processo/${idProcesso}`);
+
+            const documento = [...documentos]
+                .sort((a, b) =>
+                    new Date(b.dataCadastro || 0) - new Date(a.dataCadastro || 0)
+                )[0];
+
+            if (documento) {
+                state.documentoAtualId = documento.idDocumento;
+                $("docTitle").value = documento.nome || `Minuta_Processo_${idProcesso}`;
+                $("paperEditor").innerHTML = documento.conteudo || "<p><br></p>";
+
+                if (documento.categoriaDocumento?.codigoCategoriaDocumento) {
+                    $("selectMinutaCategoria").value =
+                        String(documento.categoriaDocumento.codigoCategoriaDocumento);
+                }
+            } else {
+                state.documentoAtualId = null;
+                $("docTitle").value = `Minuta_Processo_${idProcesso}`;
+
+                const processo = state.processos.find(
+                    p => p.idProcesso === idProcesso
+                );
+
+                $("paperEditor").innerHTML = `
+                    <h2 style="text-align:center; font-weight:bold; margin-bottom:25px;">
+                        MINUTA DO PROCESSO
+                    </h2>
+                    <p><strong>Processo:</strong> ${escapeHtml(
+                        processo?.numeroProcesso || String(idProcesso)
+                    )}</p>
+                    <p><br></p>
+                `;
+            }
+
+            $("paperEditor").dispatchEvent(new Event("input"));
+        } catch (error) {
+            alertModal(
+                "Não foi possível abrir a minuta",
+                error.message
+            );
+        }
+    }
 
     async function saveMinuta() {
         const idProcesso = Number($("selectMinutaProcesso")?.value);
@@ -1333,6 +1575,8 @@ document.addEventListener("DOMContentLoaded", () => {
             loadNotificacoes(),
             loadCategoriasDocumento()
         ]);
+
+        atualizarHome();
 
         const unauthorized = results.some(r => r.status === "rejected" && r.reason?.status === 401);
         if (unauthorized) {
