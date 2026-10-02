@@ -63,6 +63,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return div.innerHTML;
     }
 
+    let confirmationResolver = null;
+
     function openModal(id) {
         document.querySelectorAll(".modal-card").forEach(m => m.classList.remove("active"));
         $("modalOverlay")?.classList.add("active");
@@ -70,9 +72,67 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function closeModals() {
+        if (confirmationResolver) {
+            const resolve = confirmationResolver;
+            confirmationResolver = null;
+            resolve(false);
+        }
+
         $("modalOverlay")?.classList.remove("active");
         document.querySelectorAll(".modal-card").forEach(m => m.classList.remove("active"));
     }
+
+    function confirmAction(title, message) {
+        return new Promise(resolve => {
+            confirmationResolver = resolve;
+
+            if ($("confirmacaoTitulo")) {
+                $("confirmacaoTitulo").textContent = title;
+            }
+
+            if ($("confirmacaoMensagem")) {
+                $("confirmacaoMensagem").textContent = message;
+            }
+
+            openModal("modalConfirmacao");
+
+            setTimeout(() => {
+                $("btnConfirmacaoNao")?.focus();
+            }, 0);
+        });
+    }
+
+    function answerConfirmation(confirmed) {
+        if (!confirmationResolver) return;
+
+        const resolve = confirmationResolver;
+        confirmationResolver = null;
+
+        $("modalOverlay")?.classList.remove("active");
+        document.querySelectorAll(".modal-card").forEach(m => m.classList.remove("active"));
+
+        resolve(confirmed);
+    }
+
+    $("btnConfirmacaoSim")?.addEventListener("click", () => {
+        answerConfirmation(true);
+    });
+
+    $("btnConfirmacaoNao")?.addEventListener("click", () => {
+        answerConfirmation(false);
+    });
+
+    $("modalOverlay")?.addEventListener("click", event => {
+        if (event.target === $("modalOverlay")) {
+            closeModals();
+        }
+    }, true);
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && $("modalOverlay")?.classList.contains("active")) {
+            closeModals();
+        }
+    });
 
     function alertModal(title, message) {
         if ($("alertaTitulo")) $("alertaTitulo").innerHTML = `<i class="fa-solid fa-circle-info"></i> ${escapeHtml(title)}`;
@@ -284,7 +344,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (remove) {
             const id = Number(remove.dataset.clienteDelete);
-            if (!confirm("Excluir este cliente?")) return;
+            const confirmado = await confirmAction(
+                "Tem certeza que quer excluir este cliente?",
+                "Ao confirmar, o cliente será removido. Se houver processos vinculados, o backend ainda bloqueará a exclusão."
+            );
+            if (!confirmado) return;
             try {
                 await api(`/clientes/${id}`, { method: "DELETE" });
                 await loadClientes();
@@ -435,7 +499,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (remove) {
             const id = Number(remove.dataset.processoDelete);
-            if (!confirm("Excluir este processo?")) return;
+            const confirmado = await confirmAction(
+                "Tem certeza que quer excluir este processo?",
+                "Esta ação remove o processo selecionado. Escolha NÃO para manter os dados."
+            );
+            if (!confirmado) return;
             try {
                 await api(`/processos/${id}`, { method: "DELETE" });
                 await loadProcessos();
@@ -824,7 +892,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function excluirTarefa(id) {
         if (!id) return;
-        if (!confirm("Excluir este card permanentemente?")) return;
+        const confirmado = await confirmAction(
+            "Tem certeza que quer excluir este card?",
+            "O card será removido permanentemente. Escolha NÃO para cancelar e manter a tarefa."
+        );
+        if (!confirmado) return;
 
         try {
             await api(`/tarefas/${id}`, {
@@ -1161,18 +1233,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const temaSalvo = localStorage.getItem("vixlegen_theme") || "light";
     aplicarTema(temaSalvo);
 
-    $("btnTema")?.addEventListener("click", () => {
+    function alternarTema() {
         const proximo = document.body.dataset.theme === "dark"
             ? "light"
             : "dark";
 
         aplicarTema(proximo);
-    });
+    }
+
+    $("btnTema")?.addEventListener("click", alternarTema);
+    $("btnTemaAuth")?.addEventListener("click", alternarTema);
 
     $("btnTema")?.addEventListener("keydown", event => {
         if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
-            $("btnTema").click();
+            alternarTema();
         }
     });
 
@@ -1180,18 +1255,30 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.dataset.theme = tema;
         localStorage.setItem("vixlegen_theme", tema);
 
-        const icon = $("iconeTema");
-        if (icon) {
-            icon.className = tema === "dark"
-                ? "fa-solid fa-sun"
-                : "fa-solid fa-moon";
+        ["iconeTema", "iconeTemaAuth"].forEach(id => {
+            const icon = $(id);
+            if (icon) {
+                icon.className = tema === "dark"
+                    ? "fa-solid fa-sun"
+                    : "fa-solid fa-moon";
+            }
+        });
+
+        const label = tema === "dark"
+            ? "Usar tema claro"
+            : "Usar tema escuro";
+
+        const btnApp = $("btnTema");
+        if (btnApp) {
+            btnApp.dataset.tooltip = label;
+            btnApp.setAttribute("aria-label", label);
         }
 
-        const btn = $("btnTema");
-        if (btn) {
-            btn.dataset.tooltip = tema === "dark"
-                ? "Usar tema claro"
-                : "Usar tema escuro";
+        const btnAuth = $("btnTemaAuth");
+        if (btnAuth) {
+            btnAuth.setAttribute("aria-label", label);
+            const span = btnAuth.querySelector("span");
+            if (span) span.textContent = tema === "dark" ? "Claro" : "Escuro";
         }
     }
 

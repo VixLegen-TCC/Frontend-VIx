@@ -3209,49 +3209,7 @@ select option:checked {
 }
 
 /* Edge/Chromium modernos: permite estilizar também o popup aberto. */
-@supports (appearance: base-select) {
-    .records-filter,
-    .doc-context-select,
-    .tool-select,
-    .form-field select,
-    .modal-body select,
-    #filtroPrioridadeTarefa,
-    #selectPrioridadeTarefa,
-    #selectStatusTarefa,
-    #selectProcessoTarefa,
-    ::picker(select) {
-        appearance: base-select;
-    }
 
-    ::picker(select) {
-        margin-top: 6px;
-        padding: 5px;
-        border: 1px solid #d6c9cc;
-        border-radius: 11px;
-        background: #ffffff;
-        box-shadow: 0 12px 28px rgba(42, 26, 30, .16);
-    }
-
-    select option {
-        min-height: 36px;
-        padding: 9px 11px;
-        border-radius: 7px;
-        display: flex;
-        align-items: center;
-    }
-
-    select option:hover,
-    select option:focus {
-        background: #f5e9eb;
-        color: var(--cor-primaria);
-    }
-
-    select option:checked {
-        background: var(--cor-primaria);
-        color: #ffffff;
-        font-weight: 800;
-    }
-}
 
 /* Contraste correto dos dados de Empresa/Perfil no tema escuro */
 body[data-theme="dark"] .entity-detail-row {
@@ -3385,30 +3343,7 @@ body[data-theme="dark"] select option:checked {
     color: #ffffff;
 }
 
-@supports (appearance: base-select) {
-    body[data-theme="dark"] ::picker(select) {
-        background: #282124;
-        border-color: #58474c;
-        box-shadow: 0 14px 30px rgba(0,0,0,.35);
-        color: #f5edef;
-    }
 
-    body[data-theme="dark"] select option {
-        background: #282124;
-        color: #efe5e8;
-    }
-
-    body[data-theme="dark"] select option:hover,
-    body[data-theme="dark"] select option:focus {
-        background: #49353a;
-        color: #ffffff;
-    }
-
-    body[data-theme="dark"] select option:checked {
-        background: #873842;
-        color: #ffffff;
-    }
-}
 
 
 /* =========================================
@@ -3443,23 +3378,7 @@ body[data-theme="dark"] .tool-btn.active {
     margin: 0 !important;
 }
 
-@supports (appearance: base-select) {
-    .records-filter,
-    .doc-context-select,
-    .tool-select,
-    .form-field select,
-    .modal-body select,
-    #filtroPrioridadeTarefa,
-    #selectPrioridadeTarefa,
-    #selectStatusTarefa,
-    #selectProcessoTarefa {
-        appearance: none !important;
-    }
 
-    ::picker(select) {
-        margin: 0 !important;
-    }
-}
 
 /* Toolbar precisa ser compacta; não usa o tamanho dos filtros de página. */
 .editor-toolbar .tool-select,
@@ -3649,5 +3568,568 @@ body[data-theme="dark"] .ai-chat-box .ai-attach-inline {
     .editor-toolbar .tool-select,
     .editor-toolbar .doc-context-select {
         min-width: 0;
+    }
+}
+
+
+/* =========================================
+   LOGIN: TEMA COMPLETO + BOTÃO NO CANTO
+   ========================================= */
+.auth-shell {
+    position: relative;
+}
+
+.auth-theme-toggle {
+    position: fixed;
+    top: 18px;
+    right: 20px;
+    z-index: 120;
+    min-width: 92px;
+    height: 40px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid #d9cdd0;
+    border-radius: 999px;
+    background: rgba(255,255,255,.92);
+    color: #6f2c35;
+    font-family: var(--fonte-corpo);
+    font-size: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(57, 32, 37, .10);
+    backdrop-filter: blur(10px);
+    transition: transform .16s ease, background .16s ease, border-color .16s ease;
+}
+
+.auth-theme-toggle:hover {
+    transform: translateY(-1px);
+    background: #ffffff;
+    border-color: #bd9ea4;
+}
+
+.auth-theme-toggle:focus-visible {
+    outline: 3px solid rgba(136,57,66,.16);
+    outline-offset: 2px;
+}
+
+body[data-theme="dark"] .auth-shell {
+    background: #171315 !important;
+}
+
+body[data-theme="dark"] .auth-form-panel {
+    background: #1b1719 !important;
+}
+
+body[data-theme="dark"] .auth-card {
+    background: #282225 !important;
+    border-color: #493b40 !important;
+    box-shadow: 0 22px 55px rgba(0,0,0,.34) !important;
+}
+
+body[data-theme="dark"] .auth-card-header h2 {
+    color: #f6eff1 !important;
+}
+
+body[data-theme="dark"] .auth-card-header p,
+body[data-theme="dark"] .auth-switch {
+    color: #b8abad !important;
+}
+
+body[data-theme="dark"] .auth-form > label,
+body[data-theme="dark"] .auth-field label {
+    color: #ded1d4 !important;
+}
+
+body[data-theme="dark"] .auth-input-wrap input,
+body[data-theme="dark"] .auth-field input,
+body[data-theme="dark"] .auth-field select {
+    background: #211c1e !important;
+    border-color: #504247 !important;
+    color: #f4ecee !important;
+}
+
+body[data-theme="dark"] .auth-input-wrap input::placeholder,
+body[data-theme="dark"] .auth-field input::placeholder {
+    color: #9f9296 !important;
+}
+
+body[data-theme="dark"] .auth-input-wrap > i {
+    color: #c49399 !important;
+}
+
+body[data-theme="dark"] .auth-switch button {
+    color: #ef9ca6 !important;
+}
+
+body[data-theme="dark"] .auth-theme-toggle {
+    background: #2d2629;
+    border-color: #55464b;
+    color: #f3e9ec;
+    box-shadow: 0 10px 24px rgba(0,0,0,.28);
+}
+
+body[data-theme="dark"] .auth-theme-toggle:hover {
+    background: #382e32;
+    border-color: #74545b;
+}
+
+/* =========================================
+   SELECTS NATIVOS ESTILIZADOS SEM TRIÂNGULO DO PICKER
+   ========================================= */
+select,
+.records-filter,
+.doc-context-select,
+.tool-select,
+.form-field select,
+.modal-body select,
+.auth-field select,
+#filtroPrioridadeTarefa,
+#selectPrioridadeTarefa,
+#selectStatusTarefa,
+#selectProcessoTarefa {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #7d6469 50%),
+        linear-gradient(135deg, #7d6469 50%, transparent 50%) !important;
+    background-position:
+        calc(100% - 15px) 50%,
+        calc(100% - 11px) 50% !important;
+    background-size: 4px 4px, 4px 4px !important;
+    background-repeat: no-repeat !important;
+}
+
+select::-ms-expand {
+    display: none;
+}
+
+select::picker-icon {
+    display: none !important;
+}
+
+.records-filter,
+.form-field select,
+.modal-body select,
+.auth-field select,
+#filtroPrioridadeTarefa,
+#selectPrioridadeTarefa,
+#selectStatusTarefa,
+#selectProcessoTarefa {
+    min-height: 38px;
+    padding: 0 32px 0 12px !important;
+    border: 1px solid #d8cdd0 !important;
+    border-radius: 10px !important;
+    background-color: #fff !important;
+    color: #463b3e !important;
+    font-family: var(--fonte-corpo);
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 36px;
+}
+
+.editor-toolbar .tool-select,
+.editor-toolbar .doc-context-select {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 28px 0 9px !important;
+    border: 1px solid #d5c9cc !important;
+    border-radius: 8px !important;
+    background-color: #fff !important;
+    color: #493d40 !important;
+    line-height: 30px;
+}
+
+select:hover {
+    border-color: #b9949b !important;
+}
+
+select:focus {
+    border-color: var(--cor-primaria) !important;
+    box-shadow: 0 0 0 3px rgba(136,57,66,.12) !important;
+    outline: none !important;
+}
+
+select option {
+    background: #ffffff !important;
+    color: #3f3639 !important;
+}
+
+body[data-theme="dark"] select,
+body[data-theme="dark"] .records-filter,
+body[data-theme="dark"] .doc-context-select,
+body[data-theme="dark"] .tool-select,
+body[data-theme="dark"] .form-field select,
+body[data-theme="dark"] .modal-body select,
+body[data-theme="dark"] .auth-field select {
+    background-color: #2c2528 !important;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #e2d5d8 50%),
+        linear-gradient(135deg, #e2d5d8 50%, transparent 50%) !important;
+    color: #f4ecee !important;
+    border-color: #58484d !important;
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] select option {
+    background: #2c2528 !important;
+    color: #f4ecee !important;
+}
+
+/* =========================================
+   MODAIS - IDENTIDADE DA REFERÊNCIA
+   ========================================= */
+.modal-overlay {
+    background: rgba(25, 17, 20, .68) !important;
+    backdrop-filter: blur(7px) !important;
+    padding: 18px;
+}
+
+.modal-card {
+    position: relative;
+    width: min(92vw, 520px);
+    max-height: min(90vh, 820px);
+    overflow: hidden;
+    background: #fffdfd !important;
+    color: #4c4043 !important;
+    border: 2px solid #983943 !important;
+    border-radius: 30px !important;
+    box-shadow: 0 28px 70px rgba(52, 27, 32, .24) !important;
+}
+
+.modal-card.modal-wide {
+    width: min(92vw, 720px);
+}
+
+.modal-card.modal-small {
+    width: min(92vw, 470px);
+}
+
+.modal-header {
+    position: relative;
+    min-height: 72px;
+    padding: 24px 60px 10px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center !important;
+    background: transparent !important;
+    color: #5d3036 !important;
+    border: 0 !important;
+}
+
+.modal-header h3 {
+    width: 100%;
+    margin: 0;
+    color: #5a3036 !important;
+    font-family: var(--fonte-titulo);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.18;
+    text-align: center;
+}
+
+.modal-header h3 i {
+    margin-right: 7px;
+    color: #9b414c;
+    font-size: .72em;
+}
+
+.modal-close {
+    position: absolute !important;
+    top: 16px;
+    right: 18px;
+    width: 34px !important;
+    height: 34px !important;
+    display: grid !important;
+    place-items: center;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    color: #8b3a44 !important;
+    font-size: 25px !important;
+    line-height: 1 !important;
+}
+
+.modal-close:hover {
+    background: #f7e9eb !important;
+    color: #6e1e28 !important;
+}
+
+.modal-body {
+    padding: 16px 28px 22px !important;
+    background: transparent !important;
+    color: #62565a !important;
+    overflow-y: auto;
+}
+
+.modal-body.text-center {
+    padding-top: 10px !important;
+}
+
+.modal-body.text-center p {
+    max-width: 370px;
+    margin: 0 auto;
+    color: #71666a !important;
+    font-size: 16px;
+    line-height: 1.55;
+    text-align: center;
+}
+
+.modal-body.text-center p strong {
+    color: #9b3d48 !important;
+    font-style: italic;
+}
+
+.modal-body label,
+.modal-body .form-field label {
+    color: #65595d !important;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+.modal-body input,
+.modal-body textarea,
+.modal-body select {
+    border: 1px solid #d9cdd0 !important;
+    border-radius: 10px !important;
+    background-color: #fffafa !important;
+    color: #44393c !important;
+}
+
+.modal-body input:focus,
+.modal-body textarea:focus,
+.modal-body select:focus {
+    border-color: #9b3e49 !important;
+    box-shadow: 0 0 0 3px rgba(155,62,73,.10) !important;
+    outline: none !important;
+}
+
+.modal-footer {
+    padding: 8px 28px 26px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center !important;
+    gap: 18px !important;
+    background: transparent !important;
+    border: 0 !important;
+}
+
+.task-modal-footer {
+    justify-content: space-between !important;
+}
+
+.task-modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.modal-btn {
+    min-width: 128px;
+    min-height: 42px;
+    padding: 10px 22px !important;
+    border-radius: 999px !important;
+    border: 2px solid #9b3f49 !important;
+    font-family: var(--fonte-titulo) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: transform .14s ease, background .14s ease, color .14s ease;
+}
+
+.modal-btn:hover {
+    transform: translateY(-1px);
+}
+
+.modal-btn.cancel {
+    background: transparent !important;
+    color: #83303a !important;
+}
+
+.modal-btn.cancel:hover {
+    background: #f9ecee !important;
+}
+
+.modal-btn.confirm {
+    background: #8a2027 !important;
+    color: #ffffff !important;
+    border-color: #8a2027 !important;
+}
+
+.modal-btn.danger {
+    background: transparent !important;
+    color: #a32832 !important;
+    border-color: #a32832 !important;
+}
+
+.modal-btn.keep-primary {
+    background: #86181e !important;
+    color: #ffffff !important;
+    border-color: #86181e !important;
+}
+
+.modal-btn.destructive-confirm {
+    background: #ffffff !important;
+    color: #842630 !important;
+    border-color: #9b3f49 !important;
+}
+
+.modal-confirm-actions {
+    flex-direction: row !important;
+}
+
+.modal-confirmation .modal-header {
+    padding-top: 30px !important;
+}
+
+.modal-confirmation .modal-body {
+    padding-bottom: 12px !important;
+}
+
+.modal-confirmation .modal-safety-note {
+    margin-top: 10px !important;
+    color: #9b3d48 !important;
+    font-size: 12px !important;
+    font-style: italic;
+    font-weight: 700;
+}
+
+#modalSair .modal-footer {
+    flex-direction: row !important;
+}
+
+#btnCancelarSair {
+    background: #86181e !important;
+    color: #fff !important;
+    border-color: #86181e !important;
+}
+
+#btnConfirmarSair {
+    background: transparent !important;
+    color: #842630 !important;
+    border-color: #9b3f49 !important;
+}
+
+/* Modo escuro mantém o mesmo desenho, mas troca a superfície. */
+body[data-theme="dark"] .modal-card {
+    background: #282225 !important;
+    color: #f2e9ec !important;
+    border-color: #a94d58 !important;
+}
+
+body[data-theme="dark"] .modal-header {
+    background: transparent !important;
+}
+
+body[data-theme="dark"] .modal-header h3 {
+    color: #f6edef !important;
+}
+
+body[data-theme="dark"] .modal-header h3 i,
+body[data-theme="dark"] .modal-close {
+    color: #ef9da7 !important;
+}
+
+body[data-theme="dark"] .modal-close:hover {
+    background: #3c2e32 !important;
+    color: #ffffff !important;
+}
+
+body[data-theme="dark"] .modal-body {
+    background: transparent !important;
+    color: #d6c9cc !important;
+}
+
+body[data-theme="dark"] .modal-body.text-center p {
+    color: #cfc1c5 !important;
+}
+
+body[data-theme="dark"] .modal-body label,
+body[data-theme="dark"] .modal-body .form-field label {
+    color: #d7c9cd !important;
+}
+
+body[data-theme="dark"] .modal-body input,
+body[data-theme="dark"] .modal-body textarea,
+body[data-theme="dark"] .modal-body select {
+    background-color: #211c1e !important;
+    border-color: #59484e !important;
+    color: #f4ecee !important;
+}
+
+body[data-theme="dark"] .modal-footer {
+    background: transparent !important;
+}
+
+body[data-theme="dark"] .modal-btn.cancel,
+body[data-theme="dark"] .modal-btn.destructive-confirm {
+    background: transparent !important;
+    color: #f0b3bb !important;
+    border-color: #a85560 !important;
+}
+
+body[data-theme="dark"] .modal-btn.cancel:hover,
+body[data-theme="dark"] .modal-btn.destructive-confirm:hover {
+    background: #3a2b2f !important;
+}
+
+body[data-theme="dark"] .modal-btn.confirm,
+body[data-theme="dark"] .modal-btn.keep-primary,
+body[data-theme="dark"] #btnCancelarSair {
+    background: #8a2933 !important;
+    color: #ffffff !important;
+    border-color: #8a2933 !important;
+}
+
+body[data-theme="dark"] #btnConfirmarSair {
+    background: transparent !important;
+    color: #f1b2ba !important;
+    border-color: #a85560 !important;
+}
+
+@media (max-width: 620px) {
+    .auth-theme-toggle {
+        top: 12px;
+        right: 12px;
+        min-width: 42px;
+        width: 42px;
+        padding: 0;
+    }
+
+    .auth-theme-toggle span {
+        display: none;
+    }
+
+    .modal-header {
+        padding-left: 48px !important;
+        padding-right: 48px !important;
+    }
+
+    .modal-header h3 {
+        font-size: 21px;
+    }
+
+    .modal-footer,
+    .modal-confirm-actions,
+    #modalSair .modal-footer {
+        flex-direction: column-reverse !important;
+        gap: 10px !important;
+    }
+
+    .modal-btn {
+        width: 100%;
+    }
+
+    .task-modal-footer {
+        align-items: stretch !important;
+    }
+
+    .task-modal-actions {
+        width: 100%;
+        flex-direction: column;
     }
 }

@@ -12,6 +12,10 @@
 
     <!-- AUTENTICAÇÃO: LOGIN E CADASTRO -->
     <section class="auth-shell" id="authShell">
+        <button id="btnTemaAuth" class="auth-theme-toggle" type="button" aria-label="Alternar tema">
+            <i class="fa-solid fa-moon" id="iconeTemaAuth"></i>
+            <span>Tema</span>
+        </button>
         <div class="auth-brand-panel">
             <div class="auth-brand-mark"><img src="./img/LogoVL_WHITE.png" alt="VixLegen" class="brand-logo brand-logo-auth"></div>
             <span class="auth-eyebrow">VIXLEGEN</span>
@@ -839,9 +843,25 @@
             <div class="modal-body text-center">
                 <p>Tens a certeza de que pretendes encerrar a tua sessão no <strong>VixLegen</strong>?</p>
             </div>
-            <div class="modal-footer">
-                <button class="modal-btn cancel" id="btnCancelarSair">Não, Ficar</button>
-                <button class="modal-btn danger" id="btnConfirmarSair">Sim, Sair</button>
+            <div class="modal-footer modal-confirm-actions">
+                <button class="modal-btn destructive-confirm" id="btnConfirmarSair">SIM</button>
+                <button class="modal-btn cancel keep-primary" id="btnCancelarSair">NÃO</button>
+            </div>
+        </div>
+
+        <!-- MODAL: CONFIRMAÇÃO DE AÇÃO DESTRUTIVA -->
+        <div id="modalConfirmacao" class="modal-card modal-small modal-confirmation">
+            <div class="modal-header">
+                <h3 id="confirmacaoTitulo">Tem certeza?</h3>
+                <button class="modal-close" type="button" aria-label="Fechar">&times;</button>
+            </div>
+            <div class="modal-body text-center">
+                <p id="confirmacaoMensagem">Esta ação não poderá ser desfeita.</p>
+                <p class="modal-safety-note">Por segurança, a opção destacada mantém os dados.</p>
+            </div>
+            <div class="modal-footer modal-confirm-actions">
+                <button class="modal-btn destructive-confirm" id="btnConfirmacaoSim" type="button">SIM</button>
+                <button class="modal-btn keep-primary" id="btnConfirmacaoNao" type="button">NÃO</button>
             </div>
         </div>
 
