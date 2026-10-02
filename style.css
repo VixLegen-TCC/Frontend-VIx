@@ -2786,3 +2786,10 @@ body[data-theme="dark"] .process-record-link span {
         width: 48px;
     }
 }
+
+
+/* Mantém os mini-popups da sidebar fora do recorte do menu. */
+.nav-icons {
+    max-height: none;
+    overflow: visible;
+}
