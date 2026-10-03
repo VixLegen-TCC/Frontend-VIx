@@ -4,12 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Usuário local de demonstração. A autenticação deste perfil acontece
     // inteiramente no frontend e não realiza requisição ao backend.
     const LOCAL_ADMIN = Object.freeze({
-        email: "admin@VixLegend",
+        email: "admin@vixlegen",
         senha: "Vix@2026",
         usuario: {
             idUsuario: 0,
             nome: "Administrador Local",
-            email: "admin@VixLegend",
+            email: "admin@vixlegen",
             codigoCategoria: 1,
             nivelAcesso: 1
         }
