@@ -1350,6 +1350,13 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.dataset.theme = tema;
         localStorage.setItem("vixlegen_theme", tema);
 
+        const homeLogo = document.querySelector(".home-logo");
+        if (homeLogo) {
+            homeLogo.src = tema === "dark"
+                ? "./img/LogoVL_WHITE.png"
+                : "./img/LogoVL_RED.png";
+        }
+
         ["iconeTema", "iconeTemaAuth"].forEach(id => {
             const icon = $(id);
             if (icon) {
