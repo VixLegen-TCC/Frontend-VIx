@@ -731,7 +731,7 @@
 
                 <div class="form-field wide">
                     <label>Título</label>
-                    <input type="text" id="inputTituloTarefa" placeholder="Ex: Elaborar recurso especial">
+                    <input type="text" id="inputTituloTarefa" required placeholder="Ex: Elaborar recurso especial">
                 </div>
 
                 <div class="form-field wide">
@@ -741,7 +741,7 @@
 
                 <div class="form-field">
                     <label>Prazo</label>
-                    <input type="datetime-local" id="inputPrazoTarefa">
+                    <input type="datetime-local" id="inputPrazoTarefa" required>
                 </div>
 
                 <div class="form-field">
@@ -765,7 +765,7 @@
 
                 <div class="form-field">
                     <label>Processo</label>
-                    <select id="selectProcessoTarefa">
+                    <select id="selectProcessoTarefa" required>
                         <option value="">Selecione um processo</option>
                     </select>
                 </div>
@@ -788,14 +788,9 @@
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
-                <label>E-mail Corporativo</label>
-                <input type="email" id="inputEmailEmpresa">
-                
-                <label>Telefone</label>
-                <input type="text" id="inputTelefoneEmpresa">
-                
-                <label>Endereço Completo</label>
-                <textarea id="inputEnderecoEmpresa" rows="3"></textarea>
+                <div class="form-field"><label for="inputEmailEmpresa">E-mail Corporativo</label><input type="email" id="inputEmailEmpresa" required></div>
+                <div class="form-field"><label for="inputTelefoneEmpresa">Telefone</label><input type="text" id="inputTelefoneEmpresa" required></div>
+                <div class="form-field"><label for="inputEnderecoEmpresa">Endereço Completo</label><textarea id="inputEnderecoEmpresa" rows="3" required></textarea></div>
             </div>
             <div class="modal-footer">
                 <button class="modal-btn cancel" id="btnCancelarEmpresa">Cancelar</button>
@@ -807,11 +802,11 @@
         <div id="modalNovoCliente" class="modal-card modal-wide">
             <div class="modal-header"><h3><i class="fa-solid fa-user-plus"></i> Cadastrar Cliente</h3><button class="modal-close">&times;</button></div>
             <div class="modal-body form-grid">
-                <div class="form-field wide"><label>Nome completo</label><input type="text" id="clienteNome" placeholder="Nome do cliente"></div>
-                <div class="form-field"><label>E-mail</label><input type="email" id="clienteEmail" placeholder="cliente@email.com"></div>
-                <div class="form-field"><label>Telefone</label><input type="text" id="clienteTelefone" placeholder="(11) 99999-9999"></div>
+                <div class="form-field wide"><label>Nome completo</label><input type="text" id="clienteNome" required placeholder="Nome do cliente"></div>
+                <div class="form-field"><label>E-mail</label><input type="email" id="clienteEmail" required placeholder="cliente@email.com"></div>
+                <div class="form-field"><label>Telefone</label><input type="text" id="clienteTelefone" required placeholder="(11) 99999-9999"></div>
                 <div class="form-field"><label>Tipo de documento</label><select id="clienteTipoDocumento"><option value="cpf">CPF</option><option value="cnpj">CNPJ</option></select></div>
-                <div class="form-field"><label id="clienteDocumentoLabel">CPF</label><input type="text" id="clienteDocumento" placeholder="000.000.000-00"></div>
+                <div class="form-field"><label id="clienteDocumentoLabel">CPF</label><input type="text" id="clienteDocumento" required placeholder="000.000.000-00"></div>
             </div>
             <div class="modal-footer"><button class="modal-btn cancel">Cancelar</button><button class="modal-btn confirm" id="btnSalvarCliente">Salvar Cliente</button></div>
         </div>
