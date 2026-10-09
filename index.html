@@ -38,7 +38,7 @@
                     <label for="loginEmail">E-mail</label>
                     <div class="auth-input-wrap"><i class="fa-regular fa-envelope"></i><input type="email" id="loginEmail" autocomplete="email" placeholder="seu@email.com" required></div>
                     <label for="loginSenha">Senha</label>
-                    <div class="auth-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="loginSenha" autocomplete="current-password" placeholder="Sua senha" required></div>
+                    <div class="auth-input-wrap password-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="loginSenha" autocomplete="current-password" placeholder="Sua senha" required><button type="button" class="password-visibility-toggle" data-password-target="loginSenha" aria-label="Mostrar senha" title="Mostrar senha" aria-pressed="false"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></div>
                     <p class="auth-error" id="loginErro" hidden></p>
                     <button class="auth-submit" type="submit"><i class="fa-solid fa-arrow-right-to-bracket"></i> Entrar</button>
                 </form>
@@ -54,7 +54,7 @@
                     <div class="auth-field"><label for="cadPrimeiroNome">Primeiro nome</label><input type="text" id="cadPrimeiroNome" required></div>
                     <div class="auth-field"><label for="cadUltimoNome">Último nome</label><input type="text" id="cadUltimoNome" required></div>
                     <div class="auth-field wide"><label for="cadEmail">E-mail</label><input type="email" id="cadEmail" required></div>
-                    <div class="auth-field"><label for="cadSenha">Senha</label><input type="password" id="cadSenha" minlength="8" required></div>
+                    <div class="auth-field"><label for="cadSenha">Senha</label><div class="password-input-wrap"><input type="password" id="cadSenha" autocomplete="new-password" minlength="8" required><button type="button" class="password-visibility-toggle" data-password-target="cadSenha" aria-label="Mostrar senha" title="Mostrar senha" aria-pressed="false"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></div></div>
                     <div class="auth-field"><label for="cadTelefone">Telefone</label><input type="text" id="cadTelefone" required></div>
                     <div class="auth-field"><label for="cadCpf">CPF</label><input type="text" id="cadCpf" required></div>
                     <div class="auth-field"><label for="cadRg">RG</label><input type="text" id="cadRg" required></div>

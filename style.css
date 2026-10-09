@@ -4170,3 +4170,46 @@ body[data-theme="dark"] #modalNovoProcesso .form-field small { color: #c1b3b7; }
 .profile-photo-remove { background: transparent; color: #fff0f2; text-decoration: underline; }
 .profile-photo-action:disabled { opacity: .5; cursor: not-allowed; }
 .profile-photo-info { max-width: 150px; font: 10px var(--fonte-corpo); text-align: center; color: #fff4f4; line-height: 1.3; }
+
+
+/* Controle de visibilidade de senha no login e no cadastro. */
+.password-input-wrap {
+    position: relative;
+    width: 100%;
+}
+.password-input-wrap input {
+    padding-right: 46px !important;
+}
+.password-visibility-toggle {
+    position: absolute;
+    top: 50%;
+    right: 7px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #75666a;
+    cursor: pointer;
+    font-size: 14px;
+}
+.password-visibility-toggle:hover {
+    background: #f5ecee;
+    color: var(--cor-primaria);
+}
+.password-visibility-toggle:focus-visible {
+    outline: 2px solid var(--cor-primaria);
+    outline-offset: 1px;
+}
+body[data-theme="dark"] .password-visibility-toggle {
+    color: #e0d3d7;
+}
+body[data-theme="dark"] .password-visibility-toggle:hover {
+    background: #403438;
+    color: #fff;
+}

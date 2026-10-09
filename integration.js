@@ -32,6 +32,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const $ = (id) => document.getElementById(id);
 
+    // Mostrar/ocultar senha sem enviar o formulário ou modificar a credencial.
+    document.querySelectorAll("[data-password-target]").forEach(button => {
+        button.addEventListener("click", () => {
+            const input = $(button.dataset.passwordTarget);
+            if (!input) return;
+
+            const mostrar = input.type === "password";
+            input.type = mostrar ? "text" : "password";
+            button.setAttribute("aria-pressed", String(mostrar));
+            button.setAttribute("aria-label", mostrar ? "Ocultar senha" : "Mostrar senha");
+            button.title = mostrar ? "Ocultar senha" : "Mostrar senha";
+
+            const icone = button.querySelector("i");
+            if (icone) icone.className = mostrar ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
+        });
+    });
+
     async function api(path, options = {}) {
         if (state.localAdmin) {
             const error = new Error(
