@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const $ = (id) => document.getElementById(id);
+    const validacaoModal = window.VixLegenModalValidation;
 
     // Mostrar/ocultar senha sem enviar o formulário ou modificar a credencial.
     document.querySelectorAll("[data-password-target]").forEach(button => {
@@ -106,12 +107,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let confirmationResolver = null;
 
     function openModal(id) {
+        validacaoModal.limpar(id);
         document.querySelectorAll(".modal-card").forEach(m => m.classList.remove("active"));
         $("modalOverlay")?.classList.add("active");
         $(id)?.classList.add("active");
     }
 
     function closeModals() {
+        document.querySelectorAll(".modal-card").forEach(m => validacaoModal.limpar(m));
         if (confirmationResolver) {
             const resolve = confirmationResolver;
             confirmationResolver = null;
@@ -421,9 +424,7 @@ document.addEventListener("DOMContentLoaded", () => {
             usuarioResponsavelId: state.usuario?.idUsuario
         };
 
-        if (!payload.nomeCompleto || !payload.email || !payload.telefone || !documento) {
-            return alertModal("Dados incompletos", "Preencha todos os campos do cliente.");
-        }
+        if (!validacaoModal.validar("modalNovoCliente")) return;
 
         try {
             await api("/clientes", { method: "POST", body: JSON.stringify(payload) });
@@ -432,7 +433,7 @@ document.addEventListener("DOMContentLoaded", () => {
             await loadClientes();
             alertModal("Cliente cadastrado", "O cliente foi salvo com sucesso.");
         } catch (error) {
-            alertModal("Falha ao cadastrar", error.message);
+            validacaoModal.exibirErro("modalNovoCliente", error.message);
         }
     });
 
@@ -553,14 +554,17 @@ document.addEventListener("DOMContentLoaded", () => {
             clienteId: Number($("processoCliente").value)
         };
 
-        if (!payload.numeroProcesso || !payload.vara || !payload.comarca || !payload.tribunal ||
-            !payload.instancia || !payload.dataAbertura || !payload.clienteId) {
-            return alertModal("Dados incompletos", "Preencha os dados principais do processo.");
-        }
+        const dataAtual = new Date();
+        const hojeLocal = [dataAtual.getFullYear(),
+            String(dataAtual.getMonth() + 1).padStart(2, "0"),
+            String(dataAtual.getDate()).padStart(2, "0")].join("-");
 
-        if (!validarNumeroCnj(payload.numeroProcesso)) return alertModal("Número inválido","Informe um número CNJ válido, incluindo os dígitos verificadores.");
-        if (!$("processoEstado").value || !valorJuridico("processoAreaDireito","processoAreaOutro") || !valorJuridico("processoFase","processoFaseOutro") || !$("processoTipoAcao").value.trim() || !$("processoObjeto").value.trim()) return alertModal("Dados incompletos","Informe UF, área do Direito, tipo da ação, fase processual e descrição do objeto.");
-        if (payload.dataAbertura > new Date().toLocaleDateString("en-CA")) return alertModal("Data inválida","A abertura não pode estar no futuro.");
+        if (!validacaoModal.validar("modalNovoProcesso", {
+            processoNumero: campo => validarNumeroCnj(campo.value)
+                ? "" : "Informe um número CNJ válido, incluindo os dígitos verificadores.",
+            processoDataAbertura: campo => campo.value && campo.value > hojeLocal
+                ? "A data de abertura não pode estar no futuro." : ""
+        })) return;
         try {
             const processo = await api("/processos", {
                 method: "POST",
@@ -584,7 +588,7 @@ document.addEventListener("DOMContentLoaded", () => {
             await loadNotificacoes().catch(() => {});
             alertModal("Processo cadastrado", "Processo e classificação foram salvos.");
         } catch (error) {
-            alertModal("Falha ao cadastrar", error.message);
+            validacaoModal.exibirErro("modalNovoProcesso", error.message);
         }
     });
 
@@ -669,7 +673,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     atualizarSugestoesJuridicas();
     [["processoAreaDireito","campoProcessoAreaOutro"],["processoFase","campoProcessoFaseOutro"]].forEach(([id, container]) => {
-        const update = () => { $(container).hidden = !["OUTRO","OUTRA"].includes($(id).value); };
+        const update = () => {
+            const outro = ["OUTRO","OUTRA"].includes($(id).value);
+            $(container).hidden = !outro;
+            const extra = $(container).querySelector("input");
+            if (extra) extra.required = outro;
+        };
         $(id)?.addEventListener("change", update);
         update();
     });
@@ -1086,12 +1095,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const prazo = $("inputPrazoTarefa").value;
         const processoId = Number($("selectProcessoTarefa").value);
 
-        if (!titulo || !prazo || !processoId) {
-            return alertModal(
-                "Dados incompletos",
-                "Informe título, prazo e processo para salvar o card."
-            );
-        }
+        if (!validacaoModal.validar("modalNovaTarefa")) return;
 
         const payload = {
             tipoTarefa: titulo,
@@ -1119,10 +1123,7 @@ document.addEventListener("DOMContentLoaded", () => {
             closeModals();
             await loadTarefas();
         } catch (error) {
-            alertModal(
-                id ? "Falha ao editar card" : "Falha ao criar card",
-                error.message
-            );
+            validacaoModal.exibirErro("modalNovaTarefa", error.message);
         }
     }
 
