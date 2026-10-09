@@ -6,7 +6,145 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalOverlay = document.getElementById("modalOverlay");
     const modais = document.querySelectorAll(".modal-card");
 
+    // Validação compartilhada: o modal permanece aberto até os campos estarem corretos.
+    // Utilizado nos cadastros de cliente, processo, tarefa e edição da empresa.
+    const VixLegenModalValidation = (() => {
+        const regrasPorModal = new WeakMap();
+
+        function obterModal(modalId) {
+            return typeof modalId === "string" ? document.getElementById(modalId) : modalId;
+        }
+
+        function campoDisponivel(campo) {
+            return campo.id && !campo.disabled && !campo.readOnly &&
+                !campo.closest("[hidden]") && campo.type !== "hidden" &&
+                campo.type !== "checkbox" && campo.type !== "radio";
+        }
+
+        function mensagemCampo(campo, regras = {}) {
+            if (campo.required && !String(campo.value ?? "").trim()) {
+                return "Este campo é obrigatório.";
+            }
+            if (campo.validity?.typeMismatch) return "Informe um e-mail ou valor válido.";
+            if (campo.validity?.patternMismatch) return "O formato informado não é válido.";
+            if (campo.validity?.rangeOverflow || campo.validity?.rangeUnderflow) {
+                return "Valor fora do intervalo permitido.";
+            }
+            if (campo.validity && !campo.validity.valid) {
+                return "Confira o valor deste campo.";
+            }
+            const regraExtra = regras[campo.id];
+            return typeof regraExtra === "function" ? regraExtra(campo) || "" : "";
+        }
+
+        function apontarCampo(campo, mensagem) {
+            const idErro = "erro-obrigatorio-" + campo.id;
+            const aviso = document.getElementById(idErro);
+            const grupo = campo.closest(".form-field");
+            const invalido = Boolean(mensagem);
+
+            campo.classList.toggle("modal-field-invalid", invalido);
+            grupo?.classList.toggle("modal-field-group-invalid", invalido);
+
+            if (!invalido) {
+                campo.removeAttribute("aria-invalid");
+                const atual = (campo.getAttribute("aria-describedby") || "")
+                    .split(/\s+/).filter(id => id && id !== idErro);
+                if (atual.length) campo.setAttribute("aria-describedby", atual.join(" "));
+                else campo.removeAttribute("aria-describedby");
+                aviso?.remove();
+                return;
+            }
+
+            campo.setAttribute("aria-invalid", "true");
+            const descricoes = (campo.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
+            if (!descricoes.includes(idErro)) {
+                campo.setAttribute("aria-describedby", [...descricoes, idErro].join(" "));
+            }
+            const elemento = aviso || document.createElement("span");
+            elemento.id = idErro;
+            elemento.className = "modal-field-error";
+            elemento.textContent = mensagem;
+            if (!aviso) campo.insertAdjacentElement("afterend", elemento);
+        }
+
+        function avisoGeral(modal, mensagem) {
+            const corpo = modal?.querySelector(".modal-body");
+            if (!corpo) return;
+            let aviso = corpo.querySelector(".modal-validation-summary");
+            if (!aviso) {
+                aviso = document.createElement("p");
+                aviso.className = "modal-validation-summary";
+                aviso.setAttribute("role", "alert");
+                corpo.prepend(aviso);
+            }
+            aviso.textContent = mensagem;
+        }
+
+        function limparResumo(modal) {
+            modal?.querySelector(".modal-validation-summary")?.remove();
+        }
+
+        function limpar(modalId) {
+            const modal = obterModal(modalId);
+            if (!modal) return;
+            modal.querySelectorAll(".modal-field-invalid").forEach(campo => apontarCampo(campo, ""));
+            modal.querySelectorAll(".modal-field-group-invalid").forEach(grupo =>
+                grupo.classList.remove("modal-field-group-invalid"));
+            modal.querySelectorAll(".modal-field-error").forEach(erro => erro.remove());
+            limparResumo(modal);
+            regrasPorModal.delete(modal);
+        }
+
+        function validar(modalId, regras = {}) {
+            const modal = obterModal(modalId);
+            if (!modal) return false;
+            regrasPorModal.set(modal, regras);
+            const campos = Array.from(modal.querySelectorAll(".modal-body input, .modal-body select, .modal-body textarea"))
+                .filter(campoDisponivel);
+            const invalidos = [];
+
+            campos.forEach(campo => {
+                const erro = mensagemCampo(campo, regras);
+                apontarCampo(campo, erro);
+                if (erro) invalidos.push(campo);
+            });
+
+            if (!invalidos.length) {
+                limparResumo(modal);
+                return true;
+            }
+
+            avisoGeral(modal, "Confira os campos destacados para continuar. Seus dados foram mantidos.");
+            invalidos[0].scrollIntoView({ behavior: "smooth", block: "center" });
+            invalidos[0].focus({ preventScroll: true });
+            return false;
+        }
+
+        function exibirErro(modalId, mensagem) {
+            const modal = obterModal(modalId);
+            if (modal) avisoGeral(modal, mensagem);
+        }
+
+        function revalidarAoDigitar(event) {
+            const campo = event.target;
+            if (!(campo instanceof HTMLElement) || !campo.classList.contains("modal-field-invalid")) return;
+            const modal = campo.closest(".modal-card");
+            if (!modal) return;
+            apontarCampo(campo, mensagemCampo(campo, regrasPorModal.get(modal) || {}));
+            if (!modal.querySelector(".modal-field-invalid")) limparResumo(modal);
+        }
+
+        document.addEventListener("input", revalidarAoDigitar);
+        document.addEventListener("change", revalidarAoDigitar);
+
+        return { validar, limpar, exibirErro };
+    })();
+    window.VixLegenModalValidation = VixLegenModalValidation;
+
+
     function abrirModal(idModal) {
+        VixLegenModalValidation.limpar(idModal);
         modais.forEach(m => m.classList.remove("active"));
         const modalAlvo = document.getElementById(idModal);
         if (modalAlvo && modalOverlay) {
@@ -16,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function fecharModais() {
+        modais.forEach(m => VixLegenModalValidation.limpar(m));
         if (modalOverlay) {
             modalOverlay.classList.remove("active");
             modais.forEach(m => m.classList.remove("active"));
@@ -426,10 +565,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const telefone = inputTelefoneEmpresa.value.trim();
         const endereco = inputEnderecoEmpresa.value.trim();
 
-        if (!email || !telefone || !endereco) {
-            mostrarAlerta("Dados incompletos", "Preencha e-mail, telefone e endereço antes de salvar.");
-            return;
-        }
+        if (!VixLegenModalValidation.validar("modalEditarEmpresa")) return;
 
         fieldEmail.textContent = email;
         fieldTelefone.textContent = telefone;
