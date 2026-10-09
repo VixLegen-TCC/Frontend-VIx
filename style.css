@@ -4217,3 +4217,55 @@ body[data-theme="dark"] .password-visibility-toggle:hover {
 /* Alertas de prazos: data visível na listagem de processos. */
 .process-deadline { display: block; margin-top: 5px; color: #9b3d46; font-size: 11px; font-weight: 700; }
 .notification-item:has(.notif-symbol.danger) .notif-category { color: #b42318; }
+
+
+/* Validação inline de campos obrigatórios nos modais. */
+.modal-card .modal-body .modal-validation-summary {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin: 0 0 6px;
+    padding: 11px 13px;
+    border: 1px solid #d68790;
+    border-radius: 10px;
+    background: #fff0f2;
+    color: #902933;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+.modal-card .modal-body :is(input, select, textarea).modal-field-invalid {
+    border: 2px solid #c83746 !important;
+    background-color: #fff5f5 !important;
+    color: #3d2629 !important;
+    box-shadow: 0 0 0 3px rgba(200, 55, 70, .12) !important;
+}
+.modal-card .modal-body :is(input, select, textarea).modal-field-invalid:focus {
+    outline: 2px solid #be3041 !important;
+    outline-offset: 1px;
+}
+.modal-card .modal-body .modal-field-group-invalid label {
+    color: #a92d3c !important;
+}
+.modal-card .modal-body .modal-field-error {
+    display: block;
+    margin-top: 3px;
+    color: #aa2838;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+body[data-theme="dark"] .modal-card .modal-body .modal-validation-summary {
+    background: #42282e !important;
+    border-color: #cd727d !important;
+    color: #ffd1d6 !important;
+}
+body[data-theme="dark"] .modal-card .modal-body :is(input, select, textarea).modal-field-invalid {
+    border-color: #ff808f !important;
+    background-color: #392329 !important;
+    color: #fff1f1 !important;
+    box-shadow: 0 0 0 3px rgba(255, 128, 143, .16) !important;
+}
+body[data-theme="dark"] .modal-card .modal-body .modal-field-group-invalid label,
+body[data-theme="dark"] .modal-card .modal-body .modal-field-error {
+    color: #ff9daa !important;
+}
