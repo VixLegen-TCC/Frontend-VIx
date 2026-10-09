@@ -518,7 +518,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${escapeHtml(p.tribunal || "—")}</td>
                     <td>${escapeHtml(p.comarca || "—")}</td>
                     <td>${statusPill(state.status.get(p.idProcesso))}</td>
-                    <td>${formatDate(p.dataAbertura)}</td>
+                    <td>${formatDate(p.dataAbertura)}${p.prazoProcessual ? `<small class="process-deadline">Prazo: ${escapeHtml(formatDate(p.prazoProcessual))}</small>` : ""}</td>
                     <td><div class="record-actions">
                         <button class="record-more-btn" data-processo-view="${p.idProcesso}" title="Ver mais"><i class="fa-regular fa-eye"></i> Ver mais</button>
                         <button class="record-icon-btn" data-processo-editor="${p.idProcesso}" title="Abrir no editor"><i class="fa-solid fa-file-pen"></i></button>
@@ -535,6 +535,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!state.clientes.length) await loadClientes().catch(() => {});
         fillClienteSelect();
         $("processoDataAbertura").value = new Date().toISOString().slice(0, 10);
+        if ($("processoPrazoProcessual")) $("processoPrazoProcessual").value = "";
         openModal("modalNovoProcesso");
     });
 
@@ -548,6 +549,7 @@ document.addEventListener("DOMContentLoaded", () => {
             segredoJustica: $("processoSegredo").checked,
             dataAbertura: $("processoDataAbertura").value,
             dataEncerramento: null,
+            prazoProcessual: $("processoPrazoProcessual")?.value || null,
             clienteId: Number($("processoCliente").value)
         };
 
@@ -579,6 +581,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             closeModals();
             await loadProcessos();
+            await loadNotificacoes().catch(() => {});
             alertModal("Processo cadastrado", "Processo e classificação foram salvos.");
         } catch (error) {
             alertModal("Falha ao cadastrar", error.message);
@@ -603,6 +606,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 detail("Comarca", p.comarca) +
                 detail("Instância", p.instancia) +
                 detail("Abertura", formatDate(p.dataAbertura)) +
+                detail("Próximo prazo", formatDate(p.prazoProcessual)) +
                 detail("Segredo de justiça", p.segredoJustica ? "Sim" : "Não");
             openModal("modalDetalhesRegistro");
         }
@@ -1228,11 +1232,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function loadNotificacoes() {
-        if (!state.token) return;
-
-        state.notificacoes = await api("/notificacoes/minhas");
+        if (!state.token || state.localAdmin) return;
+        const tokenNaConsulta = state.token;
+        const notificacoes = await api("/notificacoes/minhas");
+        if (state.token !== tokenNaConsulta || state.localAdmin) return;
+        state.notificacoes = notificacoes;
         renderNotificacoes();
+        atualizarHome();
     }
+
+    // Atualiza o sino sem depender de navegação manual.
+    setInterval(() => {
+        if (state.token && !state.localAdmin && !document.hidden) {
+            loadNotificacoes().catch(error => console.warn("Falha ao consultar alertas:", error));
+        }
+    }, 60000);
 
     function renderNotificacoes() {
         const container = $("notificationsList");
@@ -1243,6 +1257,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const filtradas = state.notificacoes.filter(notificacao => {
             if (activeFilter === "all") return true;
             if (activeFilter === "nao-lidas") return !notificacao.lida;
+            if (activeFilter === "prazo") return Boolean(notificacao.etapaAlerta);
+            if (activeFilter === "tarefa") return notificacao.tipoReferencia === "TAREFA" || (notificacao.canal || "").toLowerCase() === "tarefa";
+            if (activeFilter === "processo") return notificacao.tipoReferencia === "PROCESSO" || (notificacao.canal || "").toLowerCase() === "processo";
             return notificacao.status === activeFilter;
         });
 
@@ -1305,7 +1322,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="notif-actions">
                         <button class="notif-action" type="button"
                                 data-notification-view="${notificacao.idNotificacao}">
-                            Ver detalhes
+                            ${notificacao.referenciaId ? (notificacao.tipoReferencia === "TAREFA" ? "Abrir tarefa" : "Abrir processo") : "Ver detalhes"}
                         </button>
                         ${unread ? `
                             <button class="notif-icon-btn" type="button"
@@ -1373,6 +1390,25 @@ document.addEventListener("DOMContentLoaded", () => {
             const notificacao = state.notificacoes.find(n => n.idNotificacao === id);
             if (!notificacao) return;
 
+            // Navega diretamente para o recurso que gerou o prazo.
+            if (notificacao.referenciaId && notificacao.tipoReferencia === "TAREFA") {
+                document.querySelector('[data-target="sec-tarefas"]')?.click();
+                abrirEditarTarefa(Number(notificacao.referenciaId));
+                if (!notificacao.lida) {
+                    try { await api(`/notificacoes/${id}/lida`, { method: "PATCH" }); await loadNotificacoes(); } catch (_) {}
+                }
+                return;
+            }
+            if (notificacao.referenciaId && notificacao.tipoReferencia === "PROCESSO") {
+                document.querySelector('[data-target="sec-processos"]')?.click();
+                const processButton = document.querySelector(`[data-processo-view="${Number(notificacao.referenciaId)}"]`);
+                if (processButton) processButton.click();
+                if (!notificacao.lida) {
+                    try { await api(`/notificacoes/${id}/lida`, { method: "PATCH" }); await loadNotificacoes(); } catch (_) {}
+                }
+                return;
+            }
+
             $("detalhesTitulo").innerHTML = '<i class="fa-regular fa-bell"></i> Notificação';
             $("detalhesConteudo").innerHTML =
                 detail("Canal", notificacao.canal) +
@@ -1408,7 +1444,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function notificationIcon(canal, status) {
         const texto = `${canal} ${status}`.toLowerCase();
 
-        if (texto.includes("prazo")) return "fa-regular fa-calendar";
+        if (texto.includes("prazo")) return "fa-solid fa-hourglass-half";
         if (texto.includes("tarefa")) return "fa-solid fa-list-check";
         if (texto.includes("process")) return "fa-solid fa-scale-balanced";
         if (texto.includes("document")) return "fa-solid fa-file-lines";
@@ -1419,6 +1455,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function notificationClass(canal, status) {
         if (status === "CANCELADA") return "danger";
         const texto = (canal || "").toLowerCase();
+        if (texto.includes("prazo")) return "danger";
         if (texto.includes("tarefa")) return "task";
         if (texto.includes("process")) return "process";
         if (texto.includes("document")) return "document";
