@@ -414,7 +414,7 @@
                         <div>
                             <span class="section-eyebrow">CENTRAL OPERACIONAL</span>
                             <h1 class="page-title notifications-title">Notificações</h1>
-                            <p class="notifications-subtitle">Avisos vinculados à sua conta, exibidos diretamente pelo backend.</p>
+                            <p class="notifications-subtitle">Alertas automáticos de tarefas e processos: 7, 3 e 1 dia antes, no vencimento e após o prazo. Confira as datas cadastradas.</p>
                         </div>
                         <button class="notif-read-all" id="btnMarcarTodasLidas" type="button">
                             <i class="fa-solid fa-check-double"></i>
@@ -441,6 +441,9 @@
 
                     <div class="notifications-toolbar" aria-label="Filtros de notificações">
                         <button class="notif-filter active" type="button" data-filter="all">Todas</button>
+                        <button class="notif-filter" type="button" data-filter="prazo">Prazos</button>
+                        <button class="notif-filter" type="button" data-filter="tarefa">Tarefas</button>
+                        <button class="notif-filter" type="button" data-filter="processo">Processos</button>
                         <button class="notif-filter" type="button" data-filter="nao-lidas">Não lidas</button>
                         <button class="notif-filter" type="button" data-filter="PENDENTE">Pendentes</button>
                         <button class="notif-filter" type="button" data-filter="ENVIADA">Enviadas</button>
@@ -825,6 +828,7 @@
                 <div class="form-field"><label for="processoTribunal">Tribunal</label><input type="text" id="processoTribunal" list="sugestoesTribunais" placeholder="Ex.: TJSP" required><datalist id="sugestoesTribunais"></datalist></div>
                 <div class="form-field"><label for="processoInstancia">Instância / grau</label><select id="processoInstancia" required><option value="">Selecione o grau</option><option value="1ª Instância">1ª Instância</option><option value="2ª Instância">2ª Instância</option><option value="Turma Recursal">Turma Recursal</option><option value="Tribunal Superior">Tribunal Superior</option></select></div>
                 <div class="form-field"><label for="processoDataAbertura">Data de abertura</label><input type="date" id="processoDataAbertura" required></div>
+                <div class="form-field"><label for="processoPrazoProcessual">Próximo prazo processual (opcional)</label><input type="date" id="processoPrazoProcessual"><small>Informe a data conferida pelo advogado. Este campo não calcula prazos legais.</small></div>
                 <div class="form-field"><label for="processoStatus">Status inicial</label><select id="processoStatus" required><option value="EM_ANDAMENTO">Em andamento</option><option value="AGUARDANDO_DECISAO">Aguardando decisão</option><option value="SUSPENSO">Suspenso</option><option value="ENCERRADO">Encerrado</option></select></div>
                 <div class="form-field"><label for="processoAreaDireito">Área do Direito</label><select id="processoAreaDireito" required><option value="">Selecione a área</option><option value="Direito Cível">Direito Cível</option><option value="Direito Penal">Direito Penal</option><option value="Direito do Trabalho">Direito do Trabalho</option><option value="Direito Previdenciário">Direito Previdenciário</option><option value="Direito de Família e Sucessões">Direito de Família e Sucessões</option><option value="Direito Empresarial">Direito Empresarial</option><option value="Direito Tributário">Direito Tributário</option><option value="Direito Administrativo">Direito Administrativo</option><option value="Direito Constitucional">Direito Constitucional</option><option value="Direito do Consumidor">Direito do Consumidor</option><option value="Direito Ambiental">Direito Ambiental</option><option value="Direito Eleitoral">Direito Eleitoral</option><option value="Direito Digital">Direito Digital</option><option value="Direito Imobiliário">Direito Imobiliário</option><option value="Direito da Saúde">Direito da Saúde</option><option value="OUTRO">Outra área</option></select></div>
                 <div class="form-field" id="campoProcessoAreaOutro" hidden><label for="processoAreaOutro">Especifique a área</label><input id="processoAreaOutro" maxlength="120" placeholder="Área do Direito"></div>
