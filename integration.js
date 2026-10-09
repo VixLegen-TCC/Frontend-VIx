@@ -235,6 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fillClienteSelect();
         fillProcessoSelect();
         renderPerfilEmpresa();
+        limparFotoPerfilVisual();
         atualizarHome();
     }
 
@@ -244,6 +245,7 @@ document.addEventListener("DOMContentLoaded", () => {
         state.localAdmin = false;
         state.usuarioDetalhado = null;
         state.documentoAtualId = null;
+        limparFotoPerfilVisual();
         localStorage.removeItem("vixlegen_token");
         localStorage.removeItem("vixlegen_usuario");
         localStorage.removeItem("vixlegen_local_admin");
@@ -537,6 +539,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return alertModal("Dados incompletos", "Preencha os dados principais do processo.");
         }
 
+        if (!validarNumeroCnj(payload.numeroProcesso)) return alertModal("Número inválido","Informe um número CNJ válido, incluindo os dígitos verificadores.");
+        if (!$("processoEstado").value || !valorJuridico("processoAreaDireito","processoAreaOutro") || !valorJuridico("processoFase","processoFaseOutro") || !$("processoTipoAcao").value.trim() || !$("processoObjeto").value.trim()) return alertModal("Dados incompletos","Informe UF, área do Direito, tipo da ação, fase processual e descrição do objeto.");
+        if (payload.dataAbertura > new Date().toLocaleDateString("en-CA")) return alertModal("Data inválida","A abertura não pode estar no futuro.");
         try {
             const processo = await api("/processos", {
                 method: "POST",
@@ -547,9 +552,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 method: "POST",
                 body: JSON.stringify({
                     status: $("processoStatus").value,
-                    areaDireito: $("processoAreaDireito").value.trim() || "Não informada",
+                    areaDireito: valorJuridico("processoAreaDireito","processoAreaOutro"),
                     tipoAcao: $("processoTipoAcao").value.trim() || "Não informado",
-                    faseProcessual: $("processoFase").value.trim() || "Inicial",
+                    faseProcessual: valorJuridico("processoFase","processoFaseOutro"),
                     descricaoObjeto: $("processoObjeto").value.trim() || "Não informado",
                     processoId: processo.idProcesso
                 })
@@ -608,11 +613,126 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+
+    // Campos jurídicos: sugestões editáveis para não bloquear comarcas/varas não cadastradas.
+    const comarcasPorUf = {
+        SP:["São Paulo","Campinas","Santos","Guarulhos","Santo André","São Bernardo do Campo","Osasco","Ribeirão Preto","Sorocaba","São José dos Campos","Jundiaí","Bauru","Piracicaba"],
+        RJ:["Rio de Janeiro","Niterói","Duque de Caxias","Nova Iguaçu","Petrópolis","Volta Redonda","Campos dos Goytacazes"],
+        MG:["Belo Horizonte","Contagem","Uberlândia","Juiz de Fora","Montes Claros","Uberaba","Betim"],
+        PR:["Curitiba","Londrina","Maringá","Cascavel","Ponta Grossa","Foz do Iguaçu"],
+        RS:["Porto Alegre","Caxias do Sul","Pelotas","Santa Maria","Canoas"],
+        BA:["Salvador","Feira de Santana","Vitória da Conquista","Ilhéus","Itabuna"],
+        SC:["Florianópolis","Joinville","Blumenau","Chapecó","Criciúma"],
+        PE:["Recife","Olinda","Jaboatão dos Guararapes","Caruaru","Petrolina"],
+        CE:["Fortaleza","Caucaia","Juazeiro do Norte","Sobral"],
+        DF:["Brasília","Taguatinga","Ceilândia","Gama","Sobradinho"]
+    };
+    const tribEstados = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+    function setSugestoes(id, nomes) {
+        const list = $(id);
+        if (list) list.replaceChildren(...nomes.map(nome => {
+            const op = document.createElement("option");
+            op.value = nome;
+            return op;
+        }));
+    }
+    function atualizarSugestoesJuridicas() {
+        const uf = $("processoEstado")?.value;
+        setSugestoes("sugestoesComarcas", comarcasPorUf[uf] || []);
+        const tribunais = ["STF","STJ","TST","TSE","STM","TRF1","TRF2","TRF3","TRF4","TRF5","TRF6","TRT1","TRT2","TRT3","TRT4","TRT5","TRT6","TRT7","TRT8","TRT9","TRT10","TRT11","TRT12","TRT13","TRT14","TRT15","TRT16","TRT17","TRT18","TRT19","TRT20","TRT21","TRT22","TRT23","TRT24"].concat(tribEstados.map(e => "TJ"+e));
+        setSugestoes("sugestoesTribunais", uf ? ["TJ"+uf,...tribunais.filter(x => x !== "TJ"+uf)] : tribunais);
+    }
+    $("processoEstado")?.addEventListener("change", () => {
+        $("processoComarca").value = "";
+        atualizarSugestoesJuridicas();
+    });
+    atualizarSugestoesJuridicas();
+    [["processoAreaDireito","campoProcessoAreaOutro"],["processoFase","campoProcessoFaseOutro"]].forEach(([id, container]) => {
+        const update = () => { $(container).hidden = !["OUTRO","OUTRA"].includes($(id).value); };
+        $(id)?.addEventListener("change", update);
+        update();
+    });
+    function valorJuridico(id, extraId) {
+        const valor = $(id)?.value.trim() || "";
+        return valor === "OUTRO" || valor === "OUTRA" ? ($(extraId)?.value.trim() || "") : valor;
+    }
+    function validarNumeroCnj(numero) {
+        const digits = numero.replace(/\D/g, "");
+        if (!/^\d{20}$/.test(digits)) return false;
+        // O dígito verificador é calculado pelos números base, ano, segmento, tribunal e unidade.
+        const base = digits.slice(0,7)+digits.slice(9);
+        const resto = BigInt(base+"00") % 97n;
+        return Number(98n-resto) === Number(digits.slice(7,9));
+    }
+    $("processoNumero")?.addEventListener("input", event => {
+        const d=event.target.value.replace(/\D/g,"").slice(0,20);
+        let result=d.slice(0,7);
+        if(d.length>7) result+="-"+d.slice(7,9);
+        if(d.length>9) result+="."+d.slice(9,13);
+        if(d.length>13) result+="."+d.slice(13,14);
+        if(d.length>14) result+="."+d.slice(14,16);
+        if(d.length>16) result+="."+d.slice(16,20);
+        event.target.value=result;
+    });
+
+    let fotoPerfilUrl = null;
+    function limparFotoPerfilVisual() {
+        if(fotoPerfilUrl){ URL.revokeObjectURL(fotoPerfilUrl); fotoPerfilUrl=null; }
+        const img=$("perfilFoto"); if(img){img.removeAttribute("src");img.hidden=true;}
+        if($("perfilIniciais")) $("perfilIniciais").hidden=false;
+        if($("btnRemoverFotoPerfil")) $("btnRemoverFotoPerfil").hidden=true;
+        if($("perfilFotoFeedback")) $("perfilFotoFeedback").textContent="";
+    }
+    async function carregarFotoPerfil() {
+        limparFotoPerfilVisual();
+        if (!state.token || state.localAdmin) {
+            if($("btnTrocarFotoPerfil")) $("btnTrocarFotoPerfil").disabled=true;
+            return;
+        }
+        if($("btnTrocarFotoPerfil")) $("btnTrocarFotoPerfil").disabled=false;
+        try {
+            const dados = await api("/auth/me/foto");
+            if(!dados?.foto) return;
+            const img=$("perfilFoto");
+            img.src=dados.foto;
+            img.hidden=false;
+            $("perfilIniciais").hidden=true;
+            $("btnRemoverFotoPerfil").hidden=false;
+        } catch(error) {
+            if($("perfilFotoFeedback")) $("perfilFotoFeedback").textContent="Não foi possível carregar a foto.";
+        }
+    }
+    $("btnTrocarFotoPerfil")?.addEventListener("click", () => {
+        if(state.token && !state.localAdmin) $("perfilFotoArquivo")?.click();
+    });
+    $("perfilFotoArquivo")?.addEventListener("change", async event => {
+        const file=event.target.files?.[0]; event.target.value="";
+        if(!file) return;
+        if(!["image/jpeg","image/png","image/webp"].includes(file.type) || file.size > 256*1024) {
+            return alertModal("Foto inválida","Use JPG, PNG ou WebP com até 256 KB.");
+        }
+        const base64=await new Promise((resolve,reject) => {
+            const leitor=new FileReader();
+            leitor.onload=()=>resolve(leitor.result);
+            leitor.onerror=()=>reject(new Error("Não foi possível ler a foto."));
+            leitor.readAsDataURL(file);
+        });
+        try {
+            await api("/auth/me/foto",{method:"PUT",body:JSON.stringify({foto:base64})});
+            await carregarFotoPerfil();
+        } catch(error){alertModal("Falha ao salvar a foto",error.message);}
+    });
+    $("btnRemoverFotoPerfil")?.addEventListener("click",async () => {
+        try {await api("/auth/me/foto",{method:"DELETE"});await carregarFotoPerfil();}
+        catch(error){alertModal("Falha ao remover foto",error.message);}
+    });
+
     async function loadPerfil() {
         if (!state.token) return;
 
         state.usuarioDetalhado = await api("/auth/me");
         renderPerfilEmpresa();
+        await carregarFotoPerfil();
     }
 
     function renderPerfilEmpresa() {
