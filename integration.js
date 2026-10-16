@@ -91,17 +91,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (!response.ok) {
-            let message = data?.mensagem || data?.message || data?.erro || data?.error || data || `Erro HTTP ${response.status}`;
-
-            if (message && typeof message === "object") {
-                const campos = Object.entries(message)
-                    .map(([campo, valor]) => `${campo}: ${valor}`)
-                    .join(" • ");
-                message = campos || "Requisição inválida";
-            }
-
-            if (response.status === 403 && (!message || message === "Forbidden")) {
-                message = "Seu perfil não possui permissão para executar esta ação.";
+            // O corpo da API tem metadados técnicos (erroId, rota, status etc.):
+            // nunca apresentar o objeto inteiro ou o texto cru do MySQL ao usuário.
+            const mensagensPadrao = {
+                400: "Verifique os dados informados.",
+                401: "Faça login novamente.",
+                403: "Seu perfil não possui permissão para executar esta ação.",
+                404: "Registro não encontrado.",
+                409: "Este dado já está cadastrado ou está vinculado a outro registro.",
+                413: "O arquivo excede o tamanho permitido.",
+                422: "Os dados enviados não puderam ser processados.",
+                429: "Muitas tentativas. Aguarde e tente novamente.",
+                500: "Não foi possível concluir a operação. Tente novamente."
+            };
+            const textoApi = typeof data?.mensagem === "string"
+                ? data.mensagem
+                : (typeof data?.message === "string" ? data.message : "");
+            const mensagemSegura = textoApi.trim();
+            // Filtra erros legados contendo SQL, Java stacktrace ou respostas HTML.
+            const tecnica = /(?:SQL|SQLSTATE|constraint|Duplicate entry|at [\\w.$]+\\(|\\bjava\\.|\\borg\\.|<html|<!doctype|stacktrace|syntax error|jdbc|hibernate)/i.test(mensagemSegura);
+            const longa = mensagemSegura.length > 180;
+            let message = mensagemSegura && !tecnica && !longa
+                ? mensagemSegura
+                : (mensagensPadrao[response.status] || `Não foi possível concluir a operação (HTTP ${response.status}).`);
+            if (response.status >= 500) {
+                message = mensagensPadrao[500];
             }
 
             const error = new Error(
@@ -227,7 +241,26 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelector('[data-target="sec-home"]')?.click();
     }
 
+    // Conversa e anexos pertencem apenas à sessão corrente. Nunca reutilizar
+    // mensagens de outro login, mesmo em troca de conta na mesma aba.
+    function resetarChatSessao() {
+        state.aiFiles = [];
+        const mensagens = $("chatMessages");
+        if (mensagens) {
+            mensagens.innerHTML = `
+                <div class="chat-msg ai">
+                    <i class="fa-solid fa-robot"></i>
+                    <p>Selecione um processo ou anexe documentos e descreva o que deseja analisar.</p>
+                </div>`;
+            mensagens.scrollTop = 0;
+        }
+        if ($("chatInput")) $("chatInput").value = "";
+        if ($("aiFileInput")) $("aiFileInput").value = "";
+        renderIaFiles();
+    }
+
     function saveSession(data) {
+        resetarChatSessao();
         state.localAdmin = false;
         sessionStorage.removeItem("vixlegen_local_admin");
 
@@ -244,6 +277,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function saveLocalAdminSession() {
+        resetarChatSessao();
         state.localAdmin = true;
         state.token = "";
         state.usuario = { ...LOCAL_ADMIN.usuario };
@@ -301,9 +335,9 @@ document.addEventListener("DOMContentLoaded", () => {
         state.processos = [];
         state.tarefas = [];
         state.notificacoes = [];
-        state.aiFiles = [];
         state.categoriasDocumento = [];
         state.status.clear();
+        resetarChatSessao();
         // Limpa os dados exibidos da conta anterior antes da próxima autenticação.
         renderClientes();
         renderProcessos();
@@ -814,9 +848,24 @@ document.addEventListener("DOMContentLoaded", () => {
             await carregarFotoPerfil();
         } catch(error){alertModal("Falha ao salvar a foto",error.message);}
     });
-    $("btnRemoverFotoPerfil")?.addEventListener("click",async () => {
-        try {await api("/auth/me/foto",{method:"DELETE"});await carregarFotoPerfil();}
-        catch(error){alertModal("Falha ao remover foto",error.message);}
+    $("btnRemoverFotoPerfil")?.addEventListener("click", async () => {
+        if (!state.token || state.localAdmin || $("btnRemoverFotoPerfil")?.hidden) return;
+        const confirmado = await confirmAction(
+            "Excluir foto de perfil?",
+            "Sua foto de perfil será removida. Deseja continuar?"
+        );
+        if (!confirmado) return;
+
+        const botao = $("btnRemoverFotoPerfil");
+        botao.disabled = true;
+        try {
+            await api("/auth/me/foto", { method: "DELETE" });
+            await carregarFotoPerfil();
+        } catch (error) {
+            alertModal("Falha ao remover foto", error.message);
+        } finally {
+            botao.disabled = false;
+        }
     });
 
     async function loadPerfil() {
