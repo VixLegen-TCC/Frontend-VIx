@@ -1,6 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
     const API_BASE = window.VIXLEGEN_API_URL || "http://localhost:8080";
 
+    // O modo demo é DESLIGADO por padrão. Nunca autentica no backend.
+    // Só habilitar em apresentação local: window.VIXLEGEN_DEMO_MODE = true.
+    const DEMO_MODE = window.VIXLEGEN_DEMO_MODE === true;
+
     // Usuário local de demonstração. A autenticação deste perfil acontece
     // inteiramente no frontend e não realiza requisição ao backend.
     const LOCAL_ADMIN = Object.freeze({
@@ -15,10 +19,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Tokens antigos do localStorage não são reutilizados (migração exige novo login).
+    localStorage.removeItem("vixlegen_token");
+    localStorage.removeItem("vixlegen_usuario");
+    localStorage.removeItem("vixlegen_local_admin");
+
     const state = {
-        token: localStorage.getItem("vixlegen_token") || "",
-        usuario: JSON.parse(localStorage.getItem("vixlegen_usuario") || "null"),
-        localAdmin: localStorage.getItem("vixlegen_local_admin") === "1",
+        token: sessionStorage.getItem("vixlegen_token") || "",
+        usuario: JSON.parse(sessionStorage.getItem("vixlegen_usuario") || "null"),
+        localAdmin: DEMO_MODE && sessionStorage.getItem("vixlegen_local_admin") === "1",
         clientes: [],
         processos: [],
         tarefas: [],
@@ -67,14 +76,22 @@ document.addEventListener("DOMContentLoaded", () => {
             headers.set("Authorization", `Bearer ${state.token}`);
         }
 
+        const tokenDaRequisicao = state.token;
         const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
         const type = response.headers.get("content-type") || "";
         const data = type.includes("application/json")
             ? await response.json().catch(() => null)
             : await response.text().catch(() => "");
 
+        // Evita que uma chamada antiga preencha a tela de outro usuário após logout.
+        if (path !== "/auth/login" && path !== "/auth/cadastro" && tokenDaRequisicao !== state.token) {
+            const alterada = new Error("Sessão alterada durante a requisição");
+            alterada.status = 401;
+            throw alterada;
+        }
+
         if (!response.ok) {
-            let message = data?.message || data?.erro || data?.error || data || `Erro HTTP ${response.status}`;
+            let message = data?.mensagem || data?.message || data?.erro || data?.error || data || `Erro HTTP ${response.status}`;
 
             if (message && typeof message === "object") {
                 const campos = Object.entries(message)
@@ -93,6 +110,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     : "Falha na comunicação com o servidor"
             );
             error.status = response.status;
+            error.erroId = data?.erroId || null;
+            error.campos = data?.campos || null;
+
+            // Se o JWT expirar ou for revogado, encerra a sessão imediatamente.
+            // Credenciais inválidas no formulário de login não encerram outro fluxo.
+            if (response.status === 401 && path !== "/auth/login") {
+                clearSession();
+                showAuth("login");
+                const feedback = $("loginErro");
+                if (feedback) {
+                    feedback.textContent = "Sua sessão expirou ou foi revogada. Entre novamente.";
+                    feedback.hidden = false;
+                }
+            }
             throw error;
         }
         return data;
@@ -198,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function saveSession(data) {
         state.localAdmin = false;
-        localStorage.removeItem("vixlegen_local_admin");
+        sessionStorage.removeItem("vixlegen_local_admin");
 
         state.token = data.token;
         state.usuario = {
@@ -208,8 +239,8 @@ document.addEventListener("DOMContentLoaded", () => {
             codigoCategoria: data.codigoCategoria,
             nivelAcesso: data.nivelAcesso
         };
-        localStorage.setItem("vixlegen_token", state.token);
-        localStorage.setItem("vixlegen_usuario", JSON.stringify(state.usuario));
+        sessionStorage.setItem("vixlegen_token", state.token);
+        sessionStorage.setItem("vixlegen_usuario", JSON.stringify(state.usuario));
     }
 
     function saveLocalAdminSession() {
@@ -231,12 +262,9 @@ document.addEventListener("DOMContentLoaded", () => {
             cep: null
         };
 
-        localStorage.removeItem("vixlegen_token");
-        localStorage.setItem("vixlegen_local_admin", "1");
-        localStorage.setItem(
-            "vixlegen_usuario",
-            JSON.stringify(state.usuario)
-        );
+        sessionStorage.removeItem("vixlegen_token");
+        sessionStorage.setItem("vixlegen_local_admin", "1");
+        sessionStorage.setItem("vixlegen_usuario", JSON.stringify(state.usuario));
     }
 
     function hydrateLocalAdminUi() {
@@ -266,9 +294,43 @@ document.addEventListener("DOMContentLoaded", () => {
         state.usuarioDetalhado = null;
         state.documentoAtualId = null;
         limparFotoPerfilVisual();
-        localStorage.removeItem("vixlegen_token");
-        localStorage.removeItem("vixlegen_usuario");
-        localStorage.removeItem("vixlegen_local_admin");
+        sessionStorage.removeItem("vixlegen_token");
+        sessionStorage.removeItem("vixlegen_usuario");
+        sessionStorage.removeItem("vixlegen_local_admin");
+        state.clientes = [];
+        state.processos = [];
+        state.tarefas = [];
+        state.notificacoes = [];
+        state.aiFiles = [];
+        state.categoriasDocumento = [];
+        state.status.clear();
+        // Limpa os dados exibidos da conta anterior antes da próxima autenticação.
+        renderClientes();
+        renderProcessos();
+        renderTarefas();
+        renderNotificacoes();
+        atualizarHome();
+    }
+
+    async function encerrarSessao() {
+        let falhaRevogacao = false;
+        if (state.token && !state.localAdmin) {
+            try {
+                await api("/auth/logout", { method: "POST" });
+            } catch (error) {
+                if (error.status !== 401) falhaRevogacao = true;
+            }
+        }
+        clearSession();
+        closeModals();
+        showAuth("login");
+        if (falhaRevogacao) {
+            const feedback = $("loginErro");
+            if (feedback) {
+                feedback.textContent = "Sessão local encerrada, mas o servidor não confirmou a revogação. O token anterior pode continuar válido até expirar.";
+                feedback.hidden = false;
+            }
+        }
     }
 
     $("btnIrCadastro")?.addEventListener("click", () => showAuth("cadastro"));
@@ -284,7 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // O e-mail administrativo é tratado 100% localmente:
         // até uma senha incorreta não dispara chamada ao backend.
-        if (email.toLowerCase() === LOCAL_ADMIN.email.toLowerCase()) {
+        if (DEMO_MODE && email.toLowerCase() === LOCAL_ADMIN.email.toLowerCase()) {
             if (senha !== LOCAL_ADMIN.senha) {
                 if (errorEl) {
                     errorEl.textContent = "E-mail ou senha inválidos.";
@@ -2021,9 +2083,7 @@ document.addEventListener("DOMContentLoaded", () => {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
-            clearSession();
-            closeModals();
-            showAuth("login");
+            void encerrarSessao();
         }
     }, true);
 
