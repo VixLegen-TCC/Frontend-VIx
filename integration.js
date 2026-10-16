@@ -1521,14 +1521,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            $("detalhesTitulo").innerHTML = '<i class="fa-regular fa-bell"></i> Notificação';
-            $("detalhesConteudo").innerHTML =
-                detail("Canal", notificacao.canal) +
-                detail("Status", translateNotificationStatus(notificacao.status)) +
-                detail("Data", formatDateTime(notificacao.dataEnvio)) +
-                detail("Mensagem", notificacao.mensagem);
-
-            openModal("modalDetalhesRegistro");
+            abrirDetalhesNotificacao(notificacao);
 
             if (!notificacao.lida) {
                 try {
@@ -1538,10 +1531,55 @@ document.addEventListener("DOMContentLoaded", () => {
                     const index = state.notificacoes.findIndex(n => n.idNotificacao === id);
                     if (index >= 0) state.notificacoes[index] = atualizada;
                     renderNotificacoes();
+
+                    // A leitura foi confirmada pelo backend; reflita-a apenas
+                    // se o usuário ainda estiver vendo esta notificação.
+                    const modal = $("modalDetalhesNotificacao");
+                    if (modal?.classList.contains("active") && modal.dataset.notificationId === String(id)) {
+                        atualizarLeituraDetalheNotificacao(true);
+                    }
                 } catch (_) {}
             }
         }
     });
+
+    function atualizarLeituraDetalheNotificacao(lida) {
+        const indicador = $("notifDetailLeitura");
+        if (!indicador) return;
+        indicador.classList.toggle("is-unread", !lida);
+        indicador.innerHTML = lida
+            ? '<i class="fa-regular fa-circle-check" aria-hidden="true"></i> Lida'
+            : '<i class="fa-regular fa-envelope" aria-hidden="true"></i> Não lida';
+    }
+
+    function abrirDetalhesNotificacao(notificacao) {
+        const modal = $("modalDetalhesNotificacao");
+        if (!modal) return;
+
+        const canal = notificacao.canal || "Sistema";
+        const status = notificacao.status || "PENDENTE";
+        const tom = notificationClass(canal, status) || "neutral";
+        const statusIcon = ({
+            PENDENTE: "fa-regular fa-clock",
+            ENVIADA: "fa-regular fa-circle-check",
+            CANCELADA: "fa-solid fa-ban"
+        })[status] || "fa-regular fa-bell";
+
+        modal.dataset.notificationId = String(notificacao.idNotificacao);
+        modal.dataset.tone = tom;
+        $("notifDetailCategoria").textContent = canal;
+        $("notifDetailTitulo").textContent = notificationTitle(notificacao);
+        $("notifDetailCanal").textContent = canal;
+        $("notifDetailData").textContent = formatDateTime(notificacao.dataEnvio);
+        $("notifDetailMensagem").textContent = notificacao.mensagem || "Nenhuma descrição disponível.";
+        $("notifDetailIcon").firstElementChild.className = notificationIcon(canal, status);
+        $("notifDetailStatus").innerHTML =
+            `<i class="${statusIcon}" aria-hidden="true"></i> ${escapeHtml(translateNotificationStatus(status))}`;
+        atualizarLeituraDetalheNotificacao(Boolean(notificacao.lida));
+
+        openModal("modalDetalhesNotificacao");
+        modal.querySelector(".modal-close")?.focus();
+    }
 
     function notificationTitle(notificacao) {
         const mensagem = (notificacao.mensagem || "").trim();
@@ -2119,6 +2157,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (event.target.closest(".modal-close") ||
             event.target.closest("#btnFecharDetalhes") ||
+            event.target.closest("#btnFecharDetalhesNotificacao") ||
             event.target.closest("#btnFecharAlerta")) {
 
             event.preventDefault();
