@@ -843,6 +843,54 @@
             <div class="modal-footer"><button class="modal-btn confirm" id="btnFecharDetalhes">Fechar</button></div>
         </div>
 
+        <!-- MODAL: DETALHES DE NOTIFICAÇÃO (não altera as fichas de clientes/processos) -->
+        <div id="modalDetalhesNotificacao" class="modal-card notification-detail-modal"
+             role="dialog" aria-modal="true" aria-labelledby="notifDetailTitulo">
+            <div class="notification-detail-hero">
+                <span class="notification-detail-kicker"><i class="fa-regular fa-bell"></i> CENTRAL DE NOTIFICAÇÕES</span>
+                <button class="modal-close" type="button" aria-label="Fechar detalhes da notificação">&times;</button>
+                <div class="notification-detail-identity">
+                    <div class="notification-detail-icon" id="notifDetailIcon" aria-hidden="true">
+                        <i class="fa-regular fa-bell"></i>
+                    </div>
+                    <div class="notification-detail-heading">
+                        <span id="notifDetailCategoria" class="notification-detail-category">Sistema</span>
+                        <h2 id="notifDetailTitulo">Detalhes da notificação</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body notification-detail-body">
+                <div class="notification-detail-state">
+                    <span id="notifDetailStatus" class="notification-detail-status">
+                        <i class="fa-regular fa-clock"></i> Pendente
+                    </span>
+                    <span id="notifDetailLeitura" class="notification-detail-read">
+                        <i class="fa-regular fa-envelope"></i> Não lida
+                    </span>
+                </div>
+                <div class="notification-detail-facts">
+                    <div class="notification-detail-fact">
+                        <span><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Canal</span>
+                        <strong id="notifDetailCanal">Sistema</strong>
+                    </div>
+                    <div class="notification-detail-fact">
+                        <span><i class="fa-regular fa-calendar" aria-hidden="true"></i> Data e horário</span>
+                        <strong id="notifDetailData">—</strong>
+                    </div>
+                </div>
+                <section class="notification-detail-message" aria-labelledby="notifDetailMensagemTitulo">
+                    <h3 id="notifDetailMensagemTitulo"><i class="fa-regular fa-message" aria-hidden="true"></i> Mensagem</h3>
+                    <p id="notifDetailMensagem">Nenhuma descrição disponível.</p>
+                </section>
+            </div>
+            <div class="modal-footer notification-detail-footer">
+                <span class="notification-detail-hint"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Alerta do VixLegen</span>
+                <button id="btnFecharDetalhesNotificacao" class="modal-btn confirm" type="button">
+                    Entendido <i class="fa-solid fa-check" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
         <!-- MODAL 3: CONFIRMAR SAIR -->
         <div id="modalSair" class="modal-card modal-small">
             <div class="modal-header">
