@@ -76,11 +76,19 @@ document.addEventListener("DOMContentLoaded", () => {
             headers.set("Authorization", `Bearer ${state.token}`);
         }
 
+        const tokenDaRequisicao = state.token;
         const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
         const type = response.headers.get("content-type") || "";
         const data = type.includes("application/json")
             ? await response.json().catch(() => null)
             : await response.text().catch(() => "");
+
+        // Evita que uma chamada antiga preencha a tela de outro usuário após logout.
+        if (path !== "/auth/login" && path !== "/auth/cadastro" && tokenDaRequisicao !== state.token) {
+            const alterada = new Error("Sessão alterada durante a requisição");
+            alterada.status = 401;
+            throw alterada;
+        }
 
         if (!response.ok) {
             let message = data?.mensagem || data?.message || data?.erro || data?.error || data || `Erro HTTP ${response.status}`;
@@ -296,6 +304,12 @@ document.addEventListener("DOMContentLoaded", () => {
         state.aiFiles = [];
         state.categoriasDocumento = [];
         state.status.clear();
+        // Limpa os dados exibidos da conta anterior antes da próxima autenticação.
+        renderClientes();
+        renderProcessos();
+        renderTarefas();
+        renderNotificacoes();
+        atualizarHome();
     }
 
     async function encerrarSessao() {
