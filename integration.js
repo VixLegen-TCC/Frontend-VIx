@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 : (typeof data?.message === "string" ? data.message : "");
             const mensagemSegura = textoApi.trim();
             // Filtra erros legados contendo SQL, Java stacktrace ou respostas HTML.
-            const tecnica = /(?:SQL|SQLSTATE|constraint|Duplicate entry|at [\\w.$]+\\(|\\bjava\\.|\\borg\\.|<html|<!doctype|stacktrace|syntax error|jdbc|hibernate)/i.test(mensagemSegura);
+            const tecnica = /(?:SQL|SQLSTATE|constraint|Duplicate entry|at [\w.$]+\(|\bjava\.|\borg\.|<html|<!doctype|stacktrace|syntax error|jdbc|hibernate)/i.test(mensagemSegura);
             const longa = mensagemSegura.length > 180;
             let message = mensagemSegura && !tecnica && !longa
                 ? mensagemSegura
