@@ -1,0 +1,36 @@
+            <!-- SEÇÃO 5: ASSISTENTE IA -->
+            <section id="sec-ia" class="app-section" style="display: none;">
+                <div class="ai-page">
+                    <header class="records-header">
+                        <div>
+                            <span class="section-eyebrow">ASSISTENTE JURÍDICO</span>
+                            <h1 class="page-title">IA VixLegen</h1>
+                            <p>Converse com a IA local e consulte a base jurídica com referências documentais.</p>
+                        </div>
+                    </header>
+                    <div class="ai-workspace">
+                        <aside class="ai-context-panel">
+                            <span class="panel-kicker">CONVERSAS</span>
+                            <h2>Suas conversas</h2>
+                            <div class="v7-sidebar-actions">
+                                <button id="v7New" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> Nova conversa</button>
+                                <button id="v7Health" type="button"><i class="fa-solid fa-signal" aria-hidden="true"></i> Verificar conexão</button>
+                                <button id="v7Close" type="button"><i class="fa-regular fa-trash-can" aria-hidden="true"></i> Encerrar conversa</button>
+                            </div>
+                            <div id="v7Conversations" aria-label="Conversas abertas"></div>
+                            <p class="v7-privacy">Histórico temporário nesta aba. Sessões expiram após inatividade. Não envie dados sigilosos. Anexos de processos e documentos privados ainda não estão habilitados na IA.</p>
+                        </aside>
+                        <div class="chat-box ai-chat-box">
+                            <div class="v7-header"><strong id="v7Title">Nova conversa</strong><span id="v7Status" role="status" aria-live="polite"></span></div>
+                            <div class="chat-messages" id="chatMessages" role="log" aria-label="Mensagens"></div>
+                            <div class="ai-composer">
+                                <div class="chat-input-area">
+                                    <textarea id="chatInput" rows="2" maxlength="4000" aria-label="Mensagem para a IA" placeholder="Pergunte sobre a Constituição Federal..."></textarea>
+                                    <button id="btnEnviarChat" class="add-btn" type="button" aria-label="Enviar mensagem"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+

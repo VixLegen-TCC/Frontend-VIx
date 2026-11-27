@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const $ = (id) => document.getElementById(id);
     const validacaoModal = window.VixLegenModalValidation;
+    const chatV7 = window.VixChatV7.create({ api, authenticated: () => Boolean(state.token) && !state.localAdmin });
 
     // Mostrar/ocultar senha sem enviar o formulário ou modificar a credencial.
     document.querySelectorAll("[data-password-target]").forEach(button => {
@@ -245,18 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // mensagens de outro login, mesmo em troca de conta na mesma aba.
     function resetarChatSessao() {
         state.aiFiles = [];
-        const mensagens = $("chatMessages");
-        if (mensagens) {
-            mensagens.innerHTML = `
-                <div class="chat-msg ai">
-                    <i class="fa-solid fa-robot"></i>
-                    <p>Selecione um processo ou anexe documentos e descreva o que deseja analisar.</p>
-                </div>`;
-            mensagens.scrollTop = 0;
-        }
-        if ($("chatInput")) $("chatInput").value = "";
-        if ($("aiFileInput")) $("aiFileInput").value = "";
-        renderIaFiles();
+        chatV7.reset();
     }
 
     function saveSession(data) {
@@ -1708,73 +1698,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    $("btnAnexarIa")?.addEventListener("click", () => {
-        $("aiFileInput")?.click();
-    });
-
-    $("aiFileInput")?.addEventListener("change", event => {
-        const novos = Array.from(event.target.files || []);
-
-        novos.forEach(file => {
-            const key = `${file.name}-${file.size}-${file.lastModified}`;
-
-            if (!state.aiFiles.some(item => item.key === key)) {
-                state.aiFiles.push({ key, file });
-            }
-        });
-
-        event.target.value = "";
-        renderIaFiles();
-    });
-
-    $("aiFilesList")?.addEventListener("click", event => {
-        const remove = event.target.closest("[data-ai-file-remove]");
-        if (!remove) return;
-
-        state.aiFiles = state.aiFiles.filter(
-            item => item.key !== remove.dataset.aiFileRemove
-        );
-
-        renderIaFiles();
-    });
-
-    function renderIaFiles() {
-        const list = $("aiFilesList");
-        const summary = $("aiAttachedSummary");
-        if (!list) return;
-
-        if (!state.aiFiles.length) {
-            list.innerHTML = '<div class="ai-file-empty">Nenhum arquivo anexado.</div>';
-            if (summary) {
-                summary.hidden = true;
-                summary.textContent = "";
-            }
-            return;
-        }
-
-        list.innerHTML = state.aiFiles.map(item => `
-            <div class="ai-file-item">
-                <i class="fa-regular fa-file-lines"></i>
-                <div>
-                    <strong>${escapeHtml(item.file.name)}</strong>
-                    <span>${formatFileSize(item.file.size)}</span>
-                </div>
-                <button class="ai-file-remove"
-                        type="button"
-                        data-ai-file-remove="${escapeHtml(item.key)}"
-                        title="Remover arquivo">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-        `).join("");
-
-        if (summary) {
-            summary.hidden = false;
-            summary.textContent =
-                `${state.aiFiles.length} arquivo(s) anexado(s) à conversa.`;
-        }
-    }
-
     function formatFileSize(bytes) {
         if (bytes < 1024) return `${bytes} B`;
         if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -1791,39 +1714,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function enviarMensagemIa() {
-        const input = $("chatInput");
-        const mensagens = $("chatMessages");
-        const texto = input?.value.trim();
-
-        if (!texto && !state.aiFiles.length) return;
-
-        const anexos = state.aiFiles.length
-            ? `<div class="chat-attachments">${state.aiFiles.map(item =>
-                `<span><i class="fa-regular fa-file"></i> ${escapeHtml(item.file.name)}</span>`
-              ).join("")}</div>`
-            : "";
-
-        mensagens?.insertAdjacentHTML(
-            "beforeend",
-            `
-                <div class="chat-msg user">
-                    <div>
-                        ${texto ? `<p>${escapeHtml(texto)}</p>` : ""}
-                        ${anexos}
-                    </div>
-                </div>
-                <div class="chat-msg ai">
-                    <i class="fa-solid fa-robot"></i>
-                    <p>Contexto recebido. A análise automática dos arquivos será executada quando o provedor de IA estiver conectado ao backend.</p>
-                </div>
-            `
-        );
-
-        if (input) input.value = "";
-        mensagens?.scrollTo({
-            top: mensagens.scrollHeight,
-            behavior: "smooth"
-        });
+        return chatV7.send();
     }
 
     async function loadCategoriasDocumento() {

@@ -1,0 +1,25 @@
+/* V7: extensão do visual existente, com suporte aos dois temas. */
+#sec-ia .v7-sidebar-actions { display:grid; gap:8px; margin:12px 0; }
+#sec-ia .v7-sidebar-actions button, #sec-ia .v7-conversation { border:1px solid currentColor; border-radius:10px; padding:10px; background:transparent; color:inherit; font:inherit; text-align:left; cursor:pointer; overflow-wrap:anywhere; }
+#sec-ia .v7-sidebar-actions button:disabled, #sec-ia .v7-conversation:disabled, #sec-ia #btnEnviarChat:disabled { opacity:.55;cursor:not-allowed; }
+#sec-ia .v7-conversation[aria-pressed="true"] { background:var(--cor-primaria,#7a2e37); color:white; border-color:transparent; }
+#sec-ia #v7Conversations { display:grid;gap:6px;max-height:310px;overflow:auto; }
+#sec-ia .v7-header { padding:12px 20px; border-bottom:1px solid #a7898f55; flex:0 0 auto; }
+#sec-ia .v7-header strong { display:block;overflow-wrap:anywhere;font-size:14px; }
+#sec-ia #v7Status { display:block;font-size:12px;margin-top:5px;min-height:16px;overflow-wrap:anywhere; }
+#sec-ia .ai-chat-box .chat-msg.ai { max-width:min(94%,880px); }
+#sec-ia .v7-body { min-width:0;overflow-wrap:anywhere; }
+#sec-ia .v7-text { white-space:pre-wrap;line-height:1.65;font-size:13px; }
+#sec-ia .v7-code { padding:12px;border-radius:8px;background:#201c20;color:#fff;overflow:auto;white-space:pre-wrap;margin:10px 0; }
+#sec-ia .v7-lang { display:block;opacity:.7;margin-bottom:8px;font-size:11px; }
+#sec-ia .v7-note { display:block;font-size:11px;line-height:1.5;border-left:2px solid #bc9359;padding:5px 8px;margin-top:8px; }
+#sec-ia .v7-meta { display:block;font-size:11px;opacity:.8;margin-top:7px; }
+#sec-ia .v7-sources { margin-top:14px; }
+#sec-ia .v7-sources h4 { margin:0 0 6px;font-size:12px; }
+#sec-ia .v7-source { border:1px solid #9f838855;border-radius:8px;padding:8px;margin-top:6px; }
+#sec-ia .v7-source summary { font-size:12px;cursor:pointer;font-weight:600; }
+#sec-ia .v7-source small { display:block;font-size:11px;margin:6px 0; }
+#sec-ia .v7-error { border-left:3px solid #ba4b4b!important; }
+#sec-ia .v7-privacy { font-size:12px;line-height:1.55; margin-top:14px; }
+#sec-ia #chatInput { flex:1;min-width:0; }
+@media(max-width:760px){#sec-ia .v7-sidebar-actions{grid-template-columns:repeat(2,minmax(0,1fr));}#sec-ia #v7Conversations{max-height:160px;}#sec-ia .v7-text{font-size:12px;}}

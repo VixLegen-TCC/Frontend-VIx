@@ -1,0 +1,14 @@
+test_busy (__main__.BrowserTests.test_busy) ... ok
+test_expired (__main__.BrowserTests.test_expired) ... ok
+test_forbidden_and_no_auth (__main__.BrowserTests.test_forbidden_and_no_auth) ... ok
+test_health (__main__.BrowserTests.test_health) ... ok
+test_independent_and_close (__main__.BrowserTests.test_independent_and_close) ... ok
+test_logout_late (__main__.BrowserTests.test_logout_late) ... ok
+test_memory_and_sources (__main__.BrowserTests.test_memory_and_sources) ... ok
+test_incompatible_no_changes (__main__.InstallerTests.test_incompatible_no_changes) ... ok
+test_patch_and_backup (__main__.InstallerTests.test_patch_and_backup) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 3.010s
+
+OK

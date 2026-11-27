@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700;800;900&family=Times+New+Roman&family=Georgia&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="chat-v7.css">
 </head>
 <body>
 
@@ -552,39 +553,28 @@
                         <div>
                             <span class="section-eyebrow">ASSISTENTE JURÍDICO</span>
                             <h1 class="page-title">IA VixLegen</h1>
-                            <p>Converse sobre o contexto do processo e anexe documentos para usar como material de apoio.</p>
+                            <p>Converse com a IA local e consulte a base jurídica com referências documentais.</p>
                         </div>
                     </header>
-
                     <div class="ai-workspace">
                         <aside class="ai-context-panel">
-                            <span class="panel-kicker">CONTEXTO</span>
-                            <h2>Arquivos da conversa</h2>
-                            <p>Adicione PDFs, DOCX, TXT ou imagens. Os arquivos ficam preparados para a conversa atual.</p>
-                            <label class="ai-upload-btn" for="aiFileInput">
-                                <i class="fa-solid fa-paperclip"></i> Adicionar arquivos
-                            </label>
-                            <input id="aiFileInput" type="file" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" hidden>
-                            <div id="aiFilesList" class="ai-files-list">
-                                <div class="ai-file-empty">Nenhum arquivo anexado.</div>
+                            <span class="panel-kicker">CONVERSAS</span>
+                            <h2>Suas conversas</h2>
+                            <div class="v7-sidebar-actions">
+                                <button id="v7New" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> Nova conversa</button>
+                                <button id="v7Health" type="button"><i class="fa-solid fa-signal" aria-hidden="true"></i> Verificar conexão</button>
+                                <button id="v7Close" type="button"><i class="fa-regular fa-trash-can" aria-hidden="true"></i> Encerrar conversa</button>
                             </div>
+                            <div id="v7Conversations" aria-label="Conversas abertas"></div>
+                            <p class="v7-privacy">Histórico temporário nesta aba. Sessões expiram após inatividade. Não envie dados sigilosos. Anexos de processos e documentos privados ainda não estão habilitados na IA.</p>
                         </aside>
-
                         <div class="chat-box ai-chat-box">
-                            <div class="chat-messages" id="chatMessages">
-                                <div class="chat-msg ai">
-                                    <i class="fa-solid fa-robot"></i>
-                                    <p>Selecione um processo ou anexe documentos e descreva o que deseja analisar.</p>
-                                </div>
-                            </div>
+                            <div class="v7-header"><strong id="v7Title">Nova conversa</strong><span id="v7Status" role="status" aria-live="polite"></span></div>
+                            <div class="chat-messages" id="chatMessages" role="log" aria-label="Mensagens"></div>
                             <div class="ai-composer">
-                                <div id="aiAttachedSummary" class="ai-attached-summary" hidden></div>
                                 <div class="chat-input-area">
-                                    <button id="btnAnexarIa" class="ai-attach-inline" type="button" title="Adicionar arquivo">
-                                        <i class="fa-solid fa-paperclip"></i>
-                                    </button>
-                                    <textarea id="chatInput" rows="2" placeholder="Pergunte sobre a minuta, prazo, documento ou processo..."></textarea>
-                                    <button id="btnEnviarChat" class="add-btn" type="button"><i class="fa-solid fa-paper-plane"></i></button>
+                                    <textarea id="chatInput" rows="2" maxlength="4000" aria-label="Mensagem para a IA" placeholder="Pergunte sobre a Constituição Federal..."></textarea>
+                                    <button id="btnEnviarChat" class="add-btn" type="button" aria-label="Enviar mensagem"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -938,6 +928,7 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="chat-v7.js"></script>
     <script src="integration.js"></script>
 </body>
 </html>

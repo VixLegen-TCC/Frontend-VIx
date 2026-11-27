@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VixLegen - Sistema Integrado</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700;800;900&family=Times+New+Roman&family=Georgia&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- AUTENTICAÇÃO: LOGIN E CADASTRO -->
+    <section class="auth-shell" id="authShell">
+        <button id="btnTemaAuth" class="auth-theme-toggle" type="button" aria-label="Alternar tema">
+            <i class="fa-solid fa-moon" id="iconeTemaAuth"></i>
+            <span>Tema</span>
+        </button>
+        <div class="auth-brand-panel">
+            <div class="auth-brand-mark"><img src="./img/LogoVL_WHITE.png" alt="VixLegen" class="brand-logo brand-logo-auth"></div>
+            <span class="auth-eyebrow">VIXLEGEN</span>
+            <h2>Rotina jurídica organizada em um só ambiente.</h2>
+            <p>Entre para acessar suas minutas, clientes, processos, tarefas e demais recursos do escritório.</p>
+            <div class="auth-brand-features">
+                <div><i class="fa-solid fa-scale-balanced"></i><span>Gestão jurídica integrada</span></div>
+                <div><i class="fa-solid fa-file-pen"></i><span>Editor de documentos jurídicos</span></div>
+                <div><i class="fa-solid fa-list-check"></i><span>Processos, clientes e prazos</span></div>
+            </div>
+        </div>
+        <div class="auth-form-panel">
+            <div class="auth-card active" id="authLoginCard">
+                <div class="auth-card-header">
+                    <span class="section-eyebrow">ACESSO PROFISSIONAL</span>
+                    <h2>Entrar no VixLegen</h2>
+                    <p>Informe suas credenciais para continuar.</p>
+                </div>
+                <form id="formLogin" class="auth-form">
+                    <label for="loginEmail">E-mail</label>
+                    <div class="auth-input-wrap"><i class="fa-regular fa-envelope"></i><input type="email" id="loginEmail" autocomplete="email" placeholder="seu@email.com" required></div>
+                    <label for="loginSenha">Senha</label>
+                    <div class="auth-input-wrap password-input-wrap"><i class="fa-solid fa-lock"></i><input type="password" id="loginSenha" autocomplete="current-password" placeholder="Sua senha" required><button type="button" class="password-visibility-toggle" data-password-target="loginSenha" aria-label="Mostrar senha" title="Mostrar senha" aria-pressed="false"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></div>
+                    <p class="auth-error" id="loginErro" hidden></p>
+                    <button class="auth-submit" type="submit"><i class="fa-solid fa-arrow-right-to-bracket"></i> Entrar</button>
+                </form>
+                <div class="auth-switch"><span>Ainda não possui conta?</span><button type="button" id="btnIrCadastro">Criar cadastro</button></div>
+            </div>
+            <div class="auth-card" id="authCadastroCard">
+                <div class="auth-card-header compact">
+                    <span class="section-eyebrow">NOVO PROFISSIONAL</span>
+                    <h2>Criar conta</h2>
+                    <p>Cadastre os dados profissionais exigidos pelo sistema.</p>
+                </div>
+                <form id="formCadastro" class="auth-form auth-form-grid">
+                    <div class="auth-field"><label for="cadPrimeiroNome">Primeiro nome</label><input type="text" id="cadPrimeiroNome" required></div>
+                    <div class="auth-field"><label for="cadUltimoNome">Último nome</label><input type="text" id="cadUltimoNome" required></div>
+                    <div class="auth-field wide"><label for="cadEmail">E-mail</label><input type="email" id="cadEmail" required></div>
+                    <div class="auth-field"><label for="cadSenha">Senha</label><div class="password-input-wrap"><input type="password" id="cadSenha" autocomplete="new-password" minlength="8" required><button type="button" class="password-visibility-toggle" data-password-target="cadSenha" aria-label="Mostrar senha" title="Mostrar senha" aria-pressed="false"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></div></div>
+                    <div class="auth-field"><label for="cadTelefone">Telefone</label><input type="text" id="cadTelefone" required></div>
+                    <div class="auth-field"><label for="cadCpf">CPF</label><input type="text" id="cadCpf" required></div>
+                    <div class="auth-field"><label for="cadRg">RG</label><input type="text" id="cadRg" required></div>
+                    <div class="auth-field"><label for="cadNumeroOab">Número OAB</label><input type="text" id="cadNumeroOab" required></div>
+                    <div class="auth-field"><label for="cadDataNascimento">Data de nascimento</label><input type="date" id="cadDataNascimento" required></div>
+                    <div class="auth-field wide"><label for="cadEmpresa">Empresa</label><input type="text" id="cadEmpresa" required></div>
+                    <div class="auth-field"><label for="cadCep">CEP</label><input type="text" id="cadCep" required></div>
+                    <div class="auth-field"><label for="cadEstado">Estado (UF)</label><select id="cadEstado" required><option value="">Selecione a UF</option><option value="AC">Acre (AC)</option><option value="AL">Alagoas (AL)</option><option value="AP">Amapá (AP)</option><option value="AM">Amazonas (AM)</option><option value="BA">Bahia (BA)</option><option value="CE">Ceará (CE)</option><option value="DF">Distrito Federal (DF)</option><option value="ES">Espírito Santo (ES)</option><option value="GO">Goiás (GO)</option><option value="MA">Maranhão (MA)</option><option value="MT">Mato Grosso (MT)</option><option value="MS">Mato Grosso do Sul (MS)</option><option value="MG">Minas Gerais (MG)</option><option value="PA">Pará (PA)</option><option value="PB">Paraíba (PB)</option><option value="PR">Paraná (PR)</option><option value="PE">Pernambuco (PE)</option><option value="PI">Piauí (PI)</option><option value="RJ">Rio de Janeiro (RJ)</option><option value="RN">Rio Grande do Norte (RN)</option><option value="RS">Rio Grande do Sul (RS)</option><option value="RO">Rondônia (RO)</option><option value="RR">Roraima (RR)</option><option value="SC">Santa Catarina (SC)</option><option value="SP">São Paulo (SP)</option><option value="SE">Sergipe (SE)</option><option value="TO">Tocantins (TO)</option></select></div>
+                    <div class="auth-field wide"><label for="cadCidade">Cidade</label><input type="text" id="cadCidade" required></div>
+                    <p class="auth-error wide" id="cadastroErro" hidden></p>
+                    <button class="auth-submit wide" type="submit"><i class="fa-solid fa-user-plus"></i> Criar conta</button>
+                </form>
+                <div class="auth-switch"><span>Já possui uma conta?</span><button type="button" id="btnIrLogin">Voltar ao login</button></div>
+            </div>
+        </div>
+    </section>
+
+    <div class="layout-container auth-hidden" id="appLayout">
+        <!-- BARRA LATERAL (SIDEBAR) -->
+        <aside class="sidebar" id="minhaSidebar">
+            <nav class="nav-icons">
+                <div class="icon-btn active" data-target="sec-home" data-tooltip="Início">
+                    <i class="fa-solid fa-house"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-editor" data-tooltip="Editor de Minutas">
+                    <i class="fa-solid fa-pen"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-processos" data-tooltip="Processos Jurídicos">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-clientes" data-tooltip="Clientes">
+                    <i class="fa-solid fa-user-group"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-tarefas" data-tooltip="Tarefas e Kanban">
+                    <i class="fa-solid fa-border-all"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-notificacoes" data-tooltip="Notificações">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="badge-count" id="badgeNotifCount">0</span>
+                </div>
+                <div class="icon-btn" data-target="sec-ia" data-tooltip="Assistente IA">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-empresa" data-tooltip="Empresa">
+                    <i class="fa-regular fa-building"></i>
+                </div>
+                <div class="icon-btn" data-target="sec-perfil" data-tooltip="Perfil">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="icon-btn" id="btnTema" data-tooltip="Alternar tema" role="button" tabindex="0">
+                    <i class="fa-solid fa-moon" id="iconeTema"></i>
+                </div>
+                <div class="icon-btn" id="btnSair" data-tooltip="Sair da sessão">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </div>
+            </nav>
+
+            <div class="logo">
+                <img src="./img/LogoVL_WHITE.png" alt="VixLegen" class="brand-logo brand-logo-sidebar">
+            </div>
+        </aside>
+
+        <!-- ÁREA PRINCIPAL -->
+        <main class="main-content">
+            <button id="btnToggle" class="toggle-btn" title="Alternar Menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <!-- TELA INICIAL -->
+            <section id="sec-home" class="app-section active">
+                <div class="home-page">
+                    <header class="home-hero">
+                        <div>
+                            <span class="section-eyebrow">PAINEL VIXLEGEN</span>
+                            <h1>Seu escritório em um só lugar.</h1>
+                            <p>Continue de onde parou, acompanhe processos, tarefas e avisos sem cair direto no editor.</p>
+                        </div>
+                        <img src="./img/LogoVL_RED.png" alt="VixLegen" class="home-logo">
+                    </header>
+
+                    <div class="home-stats">
+                        <button class="home-stat-card" type="button" data-go-section="sec-processos">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                            <div><span>Processos</span><strong id="homeProcessosCount">0</strong></div>
+                        </button>
+                        <button class="home-stat-card" type="button" data-go-section="sec-clientes">
+                            <i class="fa-solid fa-user-group"></i>
+                            <div><span>Clientes</span><strong id="homeClientesCount">0</strong></div>
+                        </button>
+                        <button class="home-stat-card" type="button" data-go-section="sec-tarefas">
+                            <i class="fa-solid fa-list-check"></i>
+                            <div><span>Tarefas abertas</span><strong id="homeTarefasCount">0</strong></div>
+                        </button>
+                        <button class="home-stat-card" type="button" data-go-section="sec-notificacoes">
+                            <i class="fa-regular fa-bell"></i>
+                            <div><span>Não lidas</span><strong id="homeNotifCount">0</strong></div>
+                        </button>
+                    </div>
+
+                    <div class="home-grid">
+                        <section class="home-panel">
+                            <div class="home-panel-head">
+                                <div><span class="panel-kicker">ATALHOS</span><h2>Acesso rápido</h2></div>
+                            </div>
+                            <div class="home-shortcuts">
+                                <button type="button" data-go-section="sec-editor"><i class="fa-solid fa-file-pen"></i><span>Nova minuta</span></button>
+                                <button type="button" data-go-section="sec-processos"><i class="fa-solid fa-folder-open"></i><span>Abrir processos</span></button>
+                                <button type="button" data-go-section="sec-tarefas"><i class="fa-solid fa-border-all"></i><span>Ver Kanban</span></button>
+                                <button type="button" data-go-section="sec-ia"><i class="fa-solid fa-robot"></i><span>Assistente IA</span></button>
+                            </div>
+                        </section>
+
+                        <section class="home-panel">
+                            <div class="home-panel-head">
+                                <div><span class="panel-kicker">ATIVIDADE</span><h2>Últimos avisos</h2></div>
+                                <button type="button" class="entity-link-action" data-go-section="sec-notificacoes">Ver tudo</button>
+                            </div>
+                            <div id="homeNotificationsPreview" class="home-notifications-preview">
+                                <div class="home-empty">Nenhuma notificação carregada.</div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 1: EDITOR JURÍDICO INTEGRADO -->
+            <section id="sec-editor" class="app-section" style="display: none;">
+                <div class="editor-wrapper">
+                    <!-- BARRA DE FERRAMENTAS SUPERIOR -->
+                    <div class="editor-toolbar">
+                        <!-- Desfazer / Refazer -->
+                        <div class="toolbar-group">
+                            <button class="tool-btn" id="btnUndo" title="Desfazer (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="tool-btn" id="btnRedo" title="Refazer (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
+                        </div>
+
+                        <!-- Estilos e Fontes -->
+                        <div class="toolbar-group">
+                            <select id="fontFamilySelect" class="tool-select" title="Fonte do Documento">
+                                <option value="'Times New Roman', serif" selected>Times New Roman</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Courier New', monospace">Courier New</option>
+                            </select>
+                            <select id="fontSizeSelect" class="tool-select" title="Tamanho da Fonte">
+                                <option value="1">10pt</option>
+                                <option value="2">11pt</option>
+                                <option value="3" selected>12pt</option>
+                                <option value="4">14pt</option>
+                                <option value="5">18pt</option>
+                            </select>
+                        </div>
+
+                        <!-- Formatação de Texto -->
+                        <div class="toolbar-group">
+                            <button class="tool-btn" id="btnBold" title="Negrito (Ctrl+B)"><i class="fa-solid fa-bold"></i></button>
+                            <button class="tool-btn" id="btnItalic" title="Itálico (Ctrl+I)"><i class="fa-solid fa-italic"></i></button>
+                            <button class="tool-btn" id="btnUnderline" title="Sublinhado (Ctrl+U)"><i class="fa-solid fa-underline"></i></button>
+                            <button class="tool-btn" id="btnStrike" title="Tachado"><i class="fa-solid fa-strikethrough"></i></button>
+                            <div class="color-picker-wrapper" title="Cor do Texto">
+                                <i class="fa-solid fa-font"></i>
+                                <input type="color" id="textColorPicker" value="#000000">
+                            </div>
+                        </div>
+
+                        <!-- Alinhamento -->
+                        <div class="toolbar-group">
+                            <button class="tool-btn" id="btnAlignLeft" title="Alinhar à Esquerda"><i class="fa-solid fa-align-left"></i></button>
+                            <button class="tool-btn" id="btnAlignCenter" title="Centralizar"><i class="fa-solid fa-align-center"></i></button>
+                            <button class="tool-btn" id="btnAlignRight" title="Alinhar à Direita"><i class="fa-solid fa-align-right"></i></button>
+                            <button class="tool-btn active" id="btnAlignJustify" title="Justificar"><i class="fa-solid fa-align-justify"></i></button>
+                        </div>
+
+                        <!-- Listas e Espaçamento -->
+                        <div class="toolbar-group">
+                            <button class="tool-btn" id="btnUnorderedList" title="Lista com Marcadores"><i class="fa-solid fa-list-ul"></i></button>
+                            <button class="tool-btn" id="btnOrderedList" title="Lista Numerada"><i class="fa-solid fa-list-ol"></i></button>
+                            <select id="lineSpacingSelect" class="tool-select" title="Espaçamento entre Linhas">
+                                <option value="1">Linha 1.0</option>
+                                <option value="1.5" selected>Linha 1.5</option>
+                                <option value="2">Linha 2.0</option>
+                            </select>
+                        </div>
+
+                        <!-- Recursos Jurídicos Especiais -->
+                        <div class="toolbar-group">
+                            <button class="tool-btn legal-tool" id="btnLegalQuote" title="Recuo Citação Jurisprudência (4cm)"><i class="fa-solid fa-indent"></i> Citação</button>
+                            <button class="tool-btn legal-tool" id="btnFootnote" title="Inserir Nota de Rodapé"><i class="fa-solid fa-asterisk"></i> Rodapé</button>
+                            <button class="tool-btn legal-tool" id="btnInsertLink" title="Inserir Link / Jurisprudência"><i class="fa-solid fa-link"></i> Link</button>
+                            
+                            <div class="dropdown-templates">
+                                <button class="tool-btn legal-tool dropdown-trigger"><i class="fa-solid fa-file-signature"></i> Modelos <i class="fa-solid fa-caret-down"></i></button>
+                                <div class="dropdown-menu">
+                                    <a href="#" class="btn-template" data-template="peticao">Petição Inicial</a>
+                                    <a href="#" class="btn-template" data-template="contestacao">Contestação</a>
+                                    <a href="#" class="btn-template" data-template="procuracao">Procuração Ad Judicia</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Título e Ações -->
+                        <div class="toolbar-right">
+                            <select id="selectMinutaProcesso" class="doc-context-select" title="Processo vinculado"><option value="">Processo...</option></select>
+                            <select id="selectMinutaCategoria" class="doc-context-select" title="Categoria do documento"><option value="">Categoria...</option></select>
+                            <input type="text" id="docTitle" class="doc-title-input" value="PeticaoInicial" placeholder="Nome do documento...">
+                            <button class="tool-action-btn" id="btnSalvarMinuta"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                            <button class="tool-action-btn pdf-btn" id="btnExportPDF"><i class="fa-solid fa-file-pdf"></i> Exportar PDF</button>
+                        </div>
+                    </div>
+
+                    <!-- CONTAINER DA FOLHA A4 -->
+                    <div class="document-container" id="documentContainer">
+                        <!-- Régua do Topo -->
+                        <div class="ruler">
+                            <div class="ruler-ticks"></div>
+                        </div>
+
+                        <!-- FOLHA A4 EDITÁVEL -->
+                        <div class="paper-page" contenteditable="true" id="paperEditor" spellcheck="true">
+                            <h2 style="text-align: center; font-weight: bold; margin-bottom: 25px;">EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA 2ª VARA CÍVEL DA COMARCA DE SÃO PAULO - SP</h2>
+                            
+                            <p style="margin-bottom: 18px;"><strong>PROCESSO Nº:</strong> 0001234-88.2026.8.26.0100</p>
+                            <p style="margin-bottom: 18px;"><strong>REQUERENTE:</strong> COMPANYJUS SERVIÇOS DE TECNOLOGIA LTDA.</p>
+                            <p style="margin-bottom: 25px;"><strong>REQUERIDO:</strong> ASSOCIADOS E DEMAIS PARTES</p>
+                            
+                            <p style="text-align: center; font-weight: bold; margin-bottom: 25px; text-transform: uppercase;">AÇÃO DE COBRANÇA C/C INDENIZAÇÃO POR DANOS MORAIS</p>
+                            
+                            <p style="margin-bottom: 18px;"><strong>COMPANYJUS SERVIÇOS DE TECNOLOGIA LTDA.</strong>, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº 45.678.910/0001-23, com sede na Av. das Nações Unidas, 12901, Cj. 801, Brooklin, São Paulo - SP, por seu advogado infra-assinado, vem, respeitosamente, à presença de Vossa Excelência, propor a presente ação com fulcro na legislação vigente.</p>
+                            
+                            <h3 style="font-weight: bold; margin-top: 25px; margin-bottom: 15px;">I. DOS FATOS</h3>
+                            <p style="margin-bottom: 18px;">A Requerente celebrou contrato de prestação de serviços técnicos jurídicos com a parte Requerida, comprometendo-se a fornecer soluções avançadas de auditoria contratual e inteligência jurídica.</p>
+
+                            <!-- Bloco de Citação Jurisprudencial -->
+                            <blockquote class="legal-quote" style="margin-left: 4cm; font-size: 10pt; line-height: 1.2; margin-top: 15px; margin-bottom: 15px; font-style: italic; border-left: 3px solid #883942; padding-left: 10px;">
+                                "O inadimplemento da obrigação, positiva e líquida, no seu termo, constitui de pleno direito em mora o devedor. Cabível a reparação integral dos prejuízos causados comprovadamente no âmbito das relações contratuais executadas." (STJ - REsp 1.234.567/SP)
+                            </blockquote>
+
+                            <h3 style="font-weight: bold; margin-top: 25px; margin-bottom: 15px;">II. DO DIREITO</h3>
+                            <p style="margin-bottom: 18px;">O direito do Requerente encontra respaldo no Código Civil Brasileiro, bem como na sólida jurisprudência dos Tribunais Superiores, restando inequívoca a obrigação de reparação dos prejuízos suportados.</p>
+
+                            <h3 style="font-weight: bold; margin-top: 25px; margin-bottom: 15px;">III. DOS PEDIDOS</h3>
+                            <p style="margin-bottom: 10px;">Diante do exposto, requer a Vossa Excelência:</p>
+                            <ol style="margin-left: 20px; margin-bottom: 25px;">
+                                <li style="margin-bottom: 8px;">A citação da parte Requerida para, querendo, apresentar contestação no prazo legal;</li>
+                                <li style="margin-bottom: 8px;">A procedência total dos pedidos formulados na inicial, condenando o Requerido ao pagamento dos valores corrigidos;</li>
+                                <li style="margin-bottom: 8px;">A condenação em custas processuais e honorários advocatícios sucumbenciais.</li>
+                            </ol>
+
+                            <p style="text-align: right; margin-top: 40px;">Nestes termos,<br>Pede deferimento.</p>
+                            <p style="text-align: right; margin-top: 20px;">São Paulo - SP, 25 de Setembro de 2026.<br><br><strong>Dr. Mário Silva</strong><br>OAB/SP 123.456</p>
+                        </div>
+
+                        <!-- Rodapé de Métricas do Documento -->
+                        <div class="editor-footer-metrics">
+                            <span id="wordCount">Palavras: 0</span>
+                            <span id="charCount">Carateres: 0</span>
+                            <span id="pageCount">Página 1 de 1</span>
+                            <span style="color: #2ecc71;"><i class="fa-solid fa-cloud-arrow-up"></i> Alterações Guardadas</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO: PROCESSOS -->
+            <section id="sec-processos" class="app-section" style="display: none;">
+                <div class="records-page">
+                    <header class="records-header">
+                        <div><span class="section-eyebrow">GESTÃO PROCESSUAL</span><h1 class="page-title">Processos</h1><p>Acompanhe os processos jurídicos cadastrados e consulte seus dados principais.</p></div>
+                        <button id="btnNovoProcesso" class="add-btn" type="button"><i class="fa-solid fa-plus"></i> Novo Processo</button>
+                    </header>
+                    <div class="records-toolbar">
+                        <div class="records-search"><i class="fa-solid fa-magnifying-glass"></i><input id="buscaProcessos" type="search" placeholder="Buscar por número, cliente, tribunal ou comarca..."></div>
+                        <select id="filtroStatusProcesso" class="records-filter"><option value="">Todos os status</option><option value="EM_ANDAMENTO">Em andamento</option><option value="SUSPENSO">Suspenso</option><option value="ENCERRADO">Encerrado</option><option value="AGUARDANDO_DECISAO">Aguardando decisão</option></select>
+                    </div>
+                    <div class="records-card">
+                        <div class="records-table-wrap"><table class="records-table"><thead><tr><th>Processo</th><th>Cliente</th><th>Tribunal</th><th>Comarca</th><th>Status</th><th>Abertura</th><th>Ações</th></tr></thead><tbody id="processosTableBody"><tr class="records-placeholder"><td colspan="7">Carregando processos...</td></tr></tbody></table></div>
+                        <div class="records-footer"><span id="processosCount">0 processos</span><span>Dados fornecidos pelo backend VixLegen</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO: CLIENTES -->
+            <section id="sec-clientes" class="app-section" style="display: none;">
+                <div class="records-page">
+                    <header class="records-header">
+                        <div><span class="section-eyebrow">CARTEIRA DO ESCRITÓRIO</span><h1 class="page-title">Clientes</h1><p>Cadastre e consulte pessoas físicas ou jurídicas vinculadas aos processos.</p></div>
+                        <button id="btnNovoCliente" class="add-btn" type="button"><i class="fa-solid fa-user-plus"></i> Novo Cliente</button>
+                    </header>
+                    <div class="records-toolbar"><div class="records-search"><i class="fa-solid fa-magnifying-glass"></i><input id="buscaClientes" type="search" placeholder="Buscar por nome, CPF/CNPJ, e-mail ou telefone..."></div></div>
+                    <div class="records-card">
+                        <div class="records-table-wrap"><table class="records-table"><thead><tr><th>Cliente</th><th>Documento</th><th>E-mail</th><th>Telefone</th><th>Ações</th></tr></thead><tbody id="clientesTableBody"><tr class="records-placeholder"><td colspan="5">Carregando clientes...</td></tr></tbody></table></div>
+                        <div class="records-footer"><span id="clientesCount">0 clientes</span><span>Cliente é administrado pelo advogado e não possui login.</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 2: QUADRO KANBAN -->
+            <section id="sec-tarefas" class="app-section" style="display: none;">
+                <div class="kanban-page">
+                    <header class="records-header kanban-header">
+                        <div>
+                            <span class="section-eyebrow">ORGANIZAÇÃO DE DEMANDAS</span>
+                            <h1 class="page-title">Tarefas</h1>
+                            <p>Arraste os cards entre as colunas, edite detalhes e acompanhe prioridades.</p>
+                        </div>
+                        <button id="btnNovaTarefa" class="add-btn" type="button">
+                            <i class="fa-solid fa-plus"></i> Novo Card
+                        </button>
+                    </header>
+
+                    <div class="kanban-toolbar">
+                        <div class="records-search">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input id="buscaTarefas" type="search" placeholder="Buscar tarefa, processo ou descrição...">
+                        </div>
+                        <select id="filtroPrioridadeTarefa" class="records-filter">
+                            <option value="">Todas as prioridades</option>
+                            <option value="URGENTE">Urgente</option>
+                            <option value="ALTA">Alta</option>
+                            <option value="MEDIA">Média</option>
+                            <option value="BAIXA">Baixa</option>
+                        </select>
+                    </div>
+
+                    <div class="kanban-board" id="kanbanBoard">
+                        <section class="kanban-column" data-status="PENDENTE">
+                            <header class="kanban-column-header">
+                                <div><span class="kanban-dot pending"></span><h2>A Fazer</h2></div>
+                                <span class="kanban-count" id="countPendente">0</span>
+                            </header>
+                            <div class="cards-container kanban-dropzone" id="kanbanPendente" data-status="PENDENTE"></div>
+                        </section>
+
+                        <section class="kanban-column" data-status="EM_ANDAMENTO">
+                            <header class="kanban-column-header">
+                                <div><span class="kanban-dot progress"></span><h2>Em Progresso</h2></div>
+                                <span class="kanban-count" id="countAndamento">0</span>
+                            </header>
+                            <div class="cards-container kanban-dropzone" id="kanbanAndamento" data-status="EM_ANDAMENTO"></div>
+                        </section>
+
+                        <section class="kanban-column" data-status="CONCLUIDA">
+                            <header class="kanban-column-header">
+                                <div><span class="kanban-dot done"></span><h2>Feito</h2></div>
+                                <span class="kanban-count" id="countConcluida">0</span>
+                            </header>
+                            <div class="cards-container kanban-dropzone" id="kanbanConcluida" data-status="CONCLUIDA"></div>
+                        </section>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 3: NOTIFICAÇÕES -->
+            <section id="sec-notificacoes" class="app-section" style="display: none;">
+                <div class="notifications-page">
+                    <header class="notifications-header">
+                        <div>
+                            <span class="section-eyebrow">CENTRAL OPERACIONAL</span>
+                            <h1 class="page-title notifications-title">Notificações</h1>
+                            <p class="notifications-subtitle">Alertas automáticos de tarefas e processos: 7, 3 e 1 dia antes, no vencimento e após o prazo. Confira as datas cadastradas.</p>
+                        </div>
+                        <button class="notif-read-all" id="btnMarcarTodasLidas" type="button">
+                            <i class="fa-solid fa-check-double"></i>
+                            Marcar todas como lidas
+                        </button>
+                    </header>
+
+                    <div class="notifications-summary">
+                        <div class="summary-item">
+                            <span class="summary-label">Não lidas</span>
+                            <strong id="notifUnreadCount">0</strong>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total</span>
+                            <strong id="notifTotalCount">0</strong>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-item">
+                            <span class="summary-label">Hoje</span>
+                            <strong id="notifTodayCount">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="notifications-toolbar" aria-label="Filtros de notificações">
+                        <button class="notif-filter active" type="button" data-filter="all">Todas</button>
+                        <button class="notif-filter" type="button" data-filter="prazo">Prazos</button>
+                        <button class="notif-filter" type="button" data-filter="tarefa">Tarefas</button>
+                        <button class="notif-filter" type="button" data-filter="processo">Processos</button>
+                        <button class="notif-filter" type="button" data-filter="nao-lidas">Não lidas</button>
+                        <button class="notif-filter" type="button" data-filter="PENDENTE">Pendentes</button>
+                        <button class="notif-filter" type="button" data-filter="ENVIADA">Enviadas</button>
+                        <button class="notif-filter" type="button" data-filter="CANCELADA">Canceladas</button>
+                    </div>
+
+                    <div class="notifications-container" id="notificationsList">
+                        <div class="notifications-empty">
+                            <i class="fa-regular fa-bell"></i>
+                            <strong>Carregando notificações...</strong>
+                            <span>Aguarde um instante.</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 4: EMPRESA (COMPANYJUS) -->
+            <section id="sec-empresa" class="app-section" style="display: none;">
+                <div class="entity-page company-page">
+                    <header class="entity-page-header">
+                        <div>
+                            <span class="section-eyebrow">ORGANIZAÇÃO VINCULADA</span>
+                            <h1 class="page-title entity-title">Empresa</h1>
+                            <p>Informações da organização informada no seu cadastro profissional.</p>
+                        </div>
+                        <button id="btnVerMaisEmpresa" class="entity-primary-action" type="button">
+                            <i class="fa-regular fa-eye"></i> Ver mais
+                        </button>
+                    </header>
+
+                    <div class="company-overview-card">
+                        <div class="company-overview-main">
+                            <div class="company-mark" aria-hidden="true">
+                                <i class="fa-solid fa-building-columns"></i>
+                            </div>
+                            <div class="company-heading">
+                                <div class="entity-status"><span></span> Empresa vinculada ao perfil</div>
+                                <h2 id="displayNomeEmpresa">Carregando...</h2>
+                                <p id="fieldRazao">Dados provenientes do cadastro do profissional.</p>
+                            </div>
+                        </div>
+                        <div class="company-registration">
+                            <span>Responsável</span>
+                            <strong id="fieldEmpresaResponsavel">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="entity-content-grid company-content-grid">
+                        <section class="entity-panel">
+                            <div class="entity-panel-heading">
+                                <div>
+                                    <span class="panel-kicker">CONTATO</span>
+                                    <h3>Contato vinculado</h3>
+                                </div>
+                                <i class="fa-regular fa-address-card"></i>
+                            </div>
+                            <div class="entity-detail-list">
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-regular fa-envelope"></i></div>
+                                    <div>
+                                        <span>E-mail do responsável</span>
+                                        <strong id="fieldEmail">—</strong>
+                                    </div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-phone"></i></div>
+                                    <div>
+                                        <span>Telefone</span>
+                                        <strong id="fieldTelefone">—</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="entity-panel">
+                            <div class="entity-panel-heading">
+                                <div>
+                                    <span class="panel-kicker">LOCALIZAÇÃO</span>
+                                    <h3>Localização cadastrada</h3>
+                                </div>
+                                <i class="fa-regular fa-map"></i>
+                            </div>
+                            <div class="company-address-block">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <p id="fieldEndereco">—</p>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="entity-footer-strip">
+                        <div>
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>O backend atual armazena o nome da empresa no cadastro do usuário; CNPJ e endereço completo ainda não fazem parte desse modelo.</span>
+                        </div>
+                        <button class="entity-link-action" type="button" data-go-section="sec-perfil">
+                            Ver perfil profissional <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 5: ASSISTENTE IA -->
+            <section id="sec-ia" class="app-section" style="display: none;">
+                <div class="ai-page">
+                    <header class="records-header">
+                        <div>
+                            <span class="section-eyebrow">ASSISTENTE JURÍDICO</span>
+                            <h1 class="page-title">IA VixLegen</h1>
+                            <p>Converse sobre o contexto do processo e anexe documentos para usar como material de apoio.</p>
+                        </div>
+                    </header>
+
+                    <div class="ai-workspace">
+                        <aside class="ai-context-panel">
+                            <span class="panel-kicker">CONTEXTO</span>
+                            <h2>Arquivos da conversa</h2>
+                            <p>Adicione PDFs, DOCX, TXT ou imagens. Os arquivos ficam preparados para a conversa atual.</p>
+                            <label class="ai-upload-btn" for="aiFileInput">
+                                <i class="fa-solid fa-paperclip"></i> Adicionar arquivos
+                            </label>
+                            <input id="aiFileInput" type="file" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" hidden>
+                            <div id="aiFilesList" class="ai-files-list">
+                                <div class="ai-file-empty">Nenhum arquivo anexado.</div>
+                            </div>
+                        </aside>
+
+                        <div class="chat-box ai-chat-box">
+                            <div class="chat-messages" id="chatMessages">
+                                <div class="chat-msg ai">
+                                    <i class="fa-solid fa-robot"></i>
+                                    <p>Selecione um processo ou anexe documentos e descreva o que deseja analisar.</p>
+                                </div>
+                            </div>
+                            <div class="ai-composer">
+                                <div id="aiAttachedSummary" class="ai-attached-summary" hidden></div>
+                                <div class="chat-input-area">
+                                    <button id="btnAnexarIa" class="ai-attach-inline" type="button" title="Adicionar arquivo">
+                                        <i class="fa-solid fa-paperclip"></i>
+                                    </button>
+                                    <textarea id="chatInput" rows="2" placeholder="Pergunte sobre a minuta, prazo, documento ou processo..."></textarea>
+                                    <button id="btnEnviarChat" class="add-btn" type="button"><i class="fa-solid fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 6: PERFIL -->
+            <section id="sec-perfil" class="app-section" style="display: none;">
+                <div class="entity-page profile-page">
+                    <header class="entity-page-header">
+                        <div>
+                            <span class="section-eyebrow">CONTA PROFISSIONAL</span>
+                            <h1 class="page-title entity-title">Perfil profissional</h1>
+                            <p>Informações reais do usuário autenticado no VixLegen.</p>
+                        </div>
+                        <button id="btnVerMaisPerfil" class="entity-primary-action" type="button">
+                            <i class="fa-regular fa-eye"></i> Ver mais
+                        </button>
+                    </header>
+
+                    <div class="profile-hero-card">
+                        <div class="profile-photo-block">
+                            <div class="profile-avatar-large" id="perfilAvatar">
+                                <img id="perfilFoto" alt="Foto de perfil do usuário" hidden>
+                                <span id="perfilIniciais">VL</span>
+                            </div>
+                            <input type="file" id="perfilFotoArquivo" accept="image/jpeg,image/png,image/webp" hidden>
+                            <button type="button" id="btnTrocarFotoPerfil" class="profile-photo-action"><i class="fa-solid fa-camera"></i> Alterar foto</button>
+                            <button type="button" id="btnRemoverFotoPerfil" class="profile-photo-remove" hidden>Remover foto</button>
+                            <span class="profile-photo-info" id="perfilFotoFeedback" role="status" aria-live="polite"></span>
+                        </div>
+                        <div class="profile-identity">
+                            <div class="entity-status"><span></span> Perfil ativo</div>
+                            <h2 id="perfilNome">Carregando...</h2>
+                            <p id="perfilCategoria">Profissional VixLegen</p>
+                            <div class="profile-tags">
+                                <span><i class="fa-solid fa-scale-balanced"></i> <span id="perfilOab">OAB —</span></span>
+                                <span><i class="fa-solid fa-building"></i> <span id="perfilEmpresaTag">Empresa —</span></span>
+                            </div>
+                        </div>
+                        <div class="profile-company-link">
+                            <span>Empresa vinculada</span>
+                            <strong id="perfilEmpresa">—</strong>
+                            <button type="button" data-go-section="sec-empresa">Abrir empresa <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="entity-content-grid profile-content-grid">
+                        <section class="entity-panel">
+                            <div class="entity-panel-heading">
+                                <div>
+                                    <span class="panel-kicker">IDENTIFICAÇÃO</span>
+                                    <h3>Dados profissionais</h3>
+                                </div>
+                                <i class="fa-regular fa-id-badge"></i>
+                            </div>
+                            <div class="entity-detail-list">
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-user"></i></div>
+                                    <div><span>Nome completo</span><strong id="perfilNomeCompleto">—</strong></div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                                    <div><span>Registro profissional</span><strong id="perfilRegistro">—</strong></div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-regular fa-id-card"></i></div>
+                                    <div><span>CPF</span><strong id="perfilCpf">—</strong></div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="entity-panel">
+                            <div class="entity-panel-heading">
+                                <div>
+                                    <span class="panel-kicker">CONTATO</span>
+                                    <h3>Conta e comunicação</h3>
+                                </div>
+                                <i class="fa-regular fa-envelope"></i>
+                            </div>
+                            <div class="entity-detail-list">
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-regular fa-envelope"></i></div>
+                                    <div><span>E-mail profissional</span><strong id="perfilEmail">—</strong></div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-phone"></i></div>
+                                    <div><span>Telefone</span><strong id="perfilTelefone">—</strong></div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-location-dot"></i></div>
+                                    <div><span>Localização</span><strong id="perfilLocalizacao">—</strong></div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="entity-panel profile-specialty-panel">
+                            <div class="entity-panel-heading">
+                                <div>
+                                    <span class="panel-kicker">CADASTRO</span>
+                                    <h3>Informações complementares</h3>
+                                </div>
+                                <i class="fa-solid fa-address-card"></i>
+                            </div>
+                            <div class="entity-detail-list">
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-solid fa-building"></i></div>
+                                    <div><span>Empresa</span><strong id="perfilEmpresaDetalhe">—</strong></div>
+                                </div>
+                                <div class="entity-detail-row">
+                                    <div class="detail-icon"><i class="fa-regular fa-calendar"></i></div>
+                                    <div><span>Data de nascimento</span><strong id="perfilNascimento">—</strong></div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="entity-footer-strip">
+                        <div>
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Os dados exibidos nesta tela são carregados do backend após o login.</span>
+                        </div>
+                        <button class="entity-link-action" type="button" data-go-section="sec-empresa">
+                            Abrir empresa <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SISTEMA DE MODAIS CUSTOMIZADOS -->
+    <div id="modalOverlay" class="modal-overlay">
+        
+        <!-- MODAL: CRIAR / EDITAR TAREFA -->
+        <div id="modalNovaTarefa" class="modal-card modal-wide">
+            <div class="modal-header">
+                <h3 id="tituloModalTarefa"><i class="fa-solid fa-note-sticky"></i> Novo Card</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body form-grid">
+                <input type="hidden" id="tarefaIdEdicao">
+
+                <div class="form-field wide">
+                    <label>Título</label>
+                    <input type="text" id="inputTituloTarefa" required placeholder="Ex: Elaborar recurso especial">
+                </div>
+
+                <div class="form-field wide">
+                    <label>Descrição</label>
+                    <textarea id="inputDescricaoTarefa" rows="4" placeholder="Adicione contexto, observações ou instruções..."></textarea>
+                </div>
+
+                <div class="form-field">
+                    <label>Prazo</label>
+                    <input type="datetime-local" id="inputPrazoTarefa" required>
+                </div>
+
+                <div class="form-field">
+                    <label>Prioridade</label>
+                    <select id="selectPrioridadeTarefa">
+                        <option value="BAIXA">Baixa</option>
+                        <option value="MEDIA" selected>Média</option>
+                        <option value="ALTA">Alta</option>
+                        <option value="URGENTE">Urgente</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Status</label>
+                    <select id="selectStatusTarefa">
+                        <option value="PENDENTE">A Fazer</option>
+                        <option value="EM_ANDAMENTO">Em Progresso</option>
+                        <option value="CONCLUIDA">Feito</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label>Processo</label>
+                    <select id="selectProcessoTarefa" required>
+                        <option value="">Selecione um processo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer task-modal-footer">
+                <button class="modal-btn danger task-delete-hidden" id="btnExcluirTarefa" type="button">
+                    <i class="fa-regular fa-trash-can"></i> Excluir
+                </button>
+                <div class="task-modal-actions">
+                    <button class="modal-btn cancel" id="btnCancelarTarefa" type="button">Cancelar</button>
+                    <button class="modal-btn confirm" id="btnConfirmarTarefa" type="button">Salvar Card</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 2: EDITAR EMPRESA -->
+        <div id="modalEditarEmpresa" class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen-to-square"></i> Editar Dados da Empresa</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-field"><label for="inputEmailEmpresa">E-mail Corporativo</label><input type="email" id="inputEmailEmpresa" required></div>
+                <div class="form-field"><label for="inputTelefoneEmpresa">Telefone</label><input type="text" id="inputTelefoneEmpresa" required></div>
+                <div class="form-field"><label for="inputEnderecoEmpresa">Endereço Completo</label><textarea id="inputEnderecoEmpresa" rows="3" required></textarea></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="btnCancelarEmpresa">Cancelar</button>
+                <button class="modal-btn confirm" id="btnSalvarEmpresa">Salvar Alterações</button>
+            </div>
+        </div>
+
+        <!-- MODAL: NOVO CLIENTE -->
+        <div id="modalNovoCliente" class="modal-card modal-wide">
+            <div class="modal-header"><h3><i class="fa-solid fa-user-plus"></i> Cadastrar Cliente</h3><button class="modal-close">&times;</button></div>
+            <div class="modal-body form-grid">
+                <div class="form-field wide"><label>Nome completo</label><input type="text" id="clienteNome" required placeholder="Nome do cliente"></div>
+                <div class="form-field"><label>E-mail</label><input type="email" id="clienteEmail" required placeholder="cliente@email.com"></div>
+                <div class="form-field"><label>Telefone</label><input type="text" id="clienteTelefone" required placeholder="(11) 99999-9999"></div>
+                <div class="form-field"><label>Tipo de documento</label><select id="clienteTipoDocumento"><option value="cpf">CPF</option><option value="cnpj">CNPJ</option></select></div>
+                <div class="form-field"><label id="clienteDocumentoLabel">CPF</label><input type="text" id="clienteDocumento" required placeholder="000.000.000-00"></div>
+            </div>
+            <div class="modal-footer"><button class="modal-btn cancel">Cancelar</button><button class="modal-btn confirm" id="btnSalvarCliente">Salvar Cliente</button></div>
+        </div>
+
+        <!-- MODAL: NOVO PROCESSO -->
+        <div id="modalNovoProcesso" class="modal-card modal-wide">
+            <div class="modal-header"><h3><i class="fa-solid fa-scale-balanced"></i> Cadastrar Processo</h3><button class="modal-close">&times;</button></div>
+            <div class="modal-body form-grid">
+                <div class="form-field wide"><label for="processoNumero">Número CNJ do processo</label><input type="text" id="processoNumero" placeholder="0000000-00.0000.0.00.0000" maxlength="25" inputmode="numeric" required><small>Formato CNJ: NNNNNNN-DD.AAAA.J.TR.OOOO</small></div>
+                <div class="form-field wide"><label for="processoCliente">Cliente</label><select id="processoCliente" required><option value="">Selecione um cliente</option></select></div>
+                <div class="form-field"><label for="processoEstado">Estado (UF)</label><select id="processoEstado" required><option value="">Selecione a UF</option><option value="AC">Acre (AC)</option><option value="AL">Alagoas (AL)</option><option value="AP">Amapá (AP)</option><option value="AM">Amazonas (AM)</option><option value="BA">Bahia (BA)</option><option value="CE">Ceará (CE)</option><option value="DF">Distrito Federal (DF)</option><option value="ES">Espírito Santo (ES)</option><option value="GO">Goiás (GO)</option><option value="MA">Maranhão (MA)</option><option value="MT">Mato Grosso (MT)</option><option value="MS">Mato Grosso do Sul (MS)</option><option value="MG">Minas Gerais (MG)</option><option value="PA">Pará (PA)</option><option value="PB">Paraíba (PB)</option><option value="PR">Paraná (PR)</option><option value="PE">Pernambuco (PE)</option><option value="PI">Piauí (PI)</option><option value="RJ">Rio de Janeiro (RJ)</option><option value="RN">Rio Grande do Norte (RN)</option><option value="RS">Rio Grande do Sul (RS)</option><option value="RO">Rondônia (RO)</option><option value="RR">Roraima (RR)</option><option value="SC">Santa Catarina (SC)</option><option value="SP">São Paulo (SP)</option><option value="SE">Sergipe (SE)</option><option value="TO">Tocantins (TO)</option></select></div>
+                <div class="form-field"><label for="processoComarca">Comarca</label><input type="text" id="processoComarca" list="sugestoesComarcas" autocomplete="off" placeholder="Digite a comarca oficial" required><datalist id="sugestoesComarcas"></datalist><small>Sugestões por UF; outras comarcas podem ser digitadas.</small></div>
+                <div class="form-field"><label for="processoVara">Vara / unidade judiciária</label><input type="text" id="processoVara" list="sugestoesVaras" placeholder="Ex.: 2ª Vara Cível" required><datalist id="sugestoesVaras"><option value="1ª Vara Cível"><option value="2ª Vara Cível"><option value="3ª Vara Cível"><option value="1ª Vara Criminal"><option value="2ª Vara Criminal"><option value="Vara Única"><option value="Vara de Família e Sucessões"><option value="Vara da Fazenda Pública"><option value="Vara do Trabalho"><option value="Vara de Execuções Penais"><option value="Juizado Especial Cível"><option value="Juizado Especial Criminal"><option value="Vara da Infância e da Juventude"><option value="Vara Empresarial"><option value="Vara Federal"><option value="Turma Recursal"></datalist></div>
+                <div class="form-field"><label for="processoTribunal">Tribunal</label><input type="text" id="processoTribunal" list="sugestoesTribunais" placeholder="Ex.: TJSP" required><datalist id="sugestoesTribunais"></datalist></div>
+                <div class="form-field"><label for="processoInstancia">Instância / grau</label><select id="processoInstancia" required><option value="">Selecione o grau</option><option value="1ª Instância">1ª Instância</option><option value="2ª Instância">2ª Instância</option><option value="Turma Recursal">Turma Recursal</option><option value="Tribunal Superior">Tribunal Superior</option></select></div>
+                <div class="form-field"><label for="processoDataAbertura">Data de abertura</label><input type="date" id="processoDataAbertura" required></div>
+                <div class="form-field"><label for="processoPrazoProcessual">Próximo prazo processual (opcional)</label><input type="date" id="processoPrazoProcessual"><small>Informe a data conferida pelo advogado. Este campo não calcula prazos legais.</small></div>
+                <div class="form-field"><label for="processoStatus">Status inicial</label><select id="processoStatus" required><option value="EM_ANDAMENTO">Em andamento</option><option value="AGUARDANDO_DECISAO">Aguardando decisão</option><option value="SUSPENSO">Suspenso</option><option value="ENCERRADO">Encerrado</option></select></div>
+                <div class="form-field"><label for="processoAreaDireito">Área do Direito</label><select id="processoAreaDireito" required><option value="">Selecione a área</option><option value="Direito Cível">Direito Cível</option><option value="Direito Penal">Direito Penal</option><option value="Direito do Trabalho">Direito do Trabalho</option><option value="Direito Previdenciário">Direito Previdenciário</option><option value="Direito de Família e Sucessões">Direito de Família e Sucessões</option><option value="Direito Empresarial">Direito Empresarial</option><option value="Direito Tributário">Direito Tributário</option><option value="Direito Administrativo">Direito Administrativo</option><option value="Direito Constitucional">Direito Constitucional</option><option value="Direito do Consumidor">Direito do Consumidor</option><option value="Direito Ambiental">Direito Ambiental</option><option value="Direito Eleitoral">Direito Eleitoral</option><option value="Direito Digital">Direito Digital</option><option value="Direito Imobiliário">Direito Imobiliário</option><option value="Direito da Saúde">Direito da Saúde</option><option value="OUTRO">Outra área</option></select></div>
+                <div class="form-field" id="campoProcessoAreaOutro" hidden><label for="processoAreaOutro">Especifique a área</label><input id="processoAreaOutro" maxlength="120" placeholder="Área do Direito"></div>
+                <div class="form-field"><label for="processoTipoAcao">Tipo da ação</label><input type="text" id="processoTipoAcao" list="sugestoesAcoes" placeholder="Ex.: Ação de cobrança" required><datalist id="sugestoesAcoes"><option value="Ação de Cobrança"><option value="Ação de Indenização"><option value="Ação de Obrigação de Fazer"><option value="Ação Declaratória"><option value="Ação Revisional"><option value="Mandado de Segurança"><option value="Execução de Título Extrajudicial"><option value="Cumprimento de Sentença"><option value="Divórcio"><option value="Ação de Alimentos"><option value="Inventário"><option value="Reclamação Trabalhista"><option value="Reclamação Previdenciária"><option value="Habeas Corpus"><option value="Ação Penal"><option value="Embargos à Execução"><option value="Recurso Inominado"><option value="Agravo de Instrumento"><option value="Apelação"></datalist></div>
+                <div class="form-field"><label for="processoFase">Fase processual</label><select id="processoFase" required><option value="">Selecione a fase</option><option value="Fase postulatória">Fase postulatória</option><option value="Fase de conhecimento">Fase de conhecimento</option><option value="Fase de instrução">Fase de instrução</option><option value="Fase de julgamento">Fase de julgamento</option><option value="Fase recursal">Fase recursal</option><option value="Liquidação">Liquidação</option><option value="Cumprimento de sentença">Cumprimento de sentença</option><option value="Execução">Execução</option><option value="Suspenso">Suspenso</option><option value="OUTRA">Outra fase</option></select></div>
+                <div class="form-field" id="campoProcessoFaseOutro" hidden><label for="processoFaseOutro">Especifique a fase</label><input id="processoFaseOutro" maxlength="120" placeholder="Fase processual"></div>
+                <div class="form-field wide"><label for="processoObjeto">Descrição do objeto</label><textarea id="processoObjeto" rows="3" maxlength="2000" placeholder="Resuma o objeto da ação sem inserir dados desnecessários" required></textarea></div>
+                <div class="form-field checkbox-field wide"><label><input type="checkbox" id="processoSegredo"> Segredo de justiça</label></div>
+            </div>
+            <div class="modal-footer"><button class="modal-btn cancel">Cancelar</button><button class="modal-btn confirm" id="btnSalvarProcesso">Salvar Processo</button></div>
+        </div>
+
+        <!-- MODAL: DETALHES -->
+        <div id="modalDetalhesRegistro" class="modal-card modal-wide">
+            <div class="modal-header"><h3 id="detalhesTitulo"><i class="fa-regular fa-folder-open"></i> Detalhes</h3><button class="modal-close">&times;</button></div>
+            <div class="modal-body"><div id="detalhesConteudo" class="detail-modal-content"></div></div>
+            <div class="modal-footer"><button class="modal-btn confirm" id="btnFecharDetalhes">Fechar</button></div>
+        </div>
+
+        <!-- MODAL: DETALHES DE NOTIFICAÇÃO (não altera as fichas de clientes/processos) -->
+        <div id="modalDetalhesNotificacao" class="modal-card notification-detail-modal"
+             role="dialog" aria-modal="true" aria-labelledby="notifDetailTitulo">
+            <div class="notification-detail-hero">
+                <span class="notification-detail-kicker"><i class="fa-regular fa-bell"></i> CENTRAL DE NOTIFICAÇÕES</span>
+                <button class="modal-close" type="button" aria-label="Fechar detalhes da notificação">&times;</button>
+                <div class="notification-detail-identity">
+                    <div class="notification-detail-icon" id="notifDetailIcon" aria-hidden="true">
+                        <i class="fa-regular fa-bell"></i>
+                    </div>
+                    <div class="notification-detail-heading">
+                        <span id="notifDetailCategoria" class="notification-detail-category">Sistema</span>
+                        <h2 id="notifDetailTitulo">Detalhes da notificação</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body notification-detail-body">
+                <div class="notification-detail-state">
+                    <span id="notifDetailStatus" class="notification-detail-status">
+                        <i class="fa-regular fa-clock"></i> Pendente
+                    </span>
+                    <span id="notifDetailLeitura" class="notification-detail-read">
+                        <i class="fa-regular fa-envelope"></i> Não lida
+                    </span>
+                </div>
+                <div class="notification-detail-facts">
+                    <div class="notification-detail-fact">
+                        <span><i class="fa-solid fa-layer-group" aria-hidden="true"></i> Canal</span>
+                        <strong id="notifDetailCanal">Sistema</strong>
+                    </div>
+                    <div class="notification-detail-fact">
+                        <span><i class="fa-regular fa-calendar" aria-hidden="true"></i> Data e horário</span>
+                        <strong id="notifDetailData">—</strong>
+                    </div>
+                </div>
+                <section class="notification-detail-message" aria-labelledby="notifDetailMensagemTitulo">
+                    <h3 id="notifDetailMensagemTitulo"><i class="fa-regular fa-message" aria-hidden="true"></i> Mensagem</h3>
+                    <p id="notifDetailMensagem">Nenhuma descrição disponível.</p>
+                </section>
+            </div>
+            <div class="modal-footer notification-detail-footer">
+                <span class="notification-detail-hint"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Alerta do VixLegen</span>
+                <button id="btnFecharDetalhesNotificacao" class="modal-btn confirm" type="button">
+                    Entendido <i class="fa-solid fa-check" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL 3: CONFIRMAR SAIR -->
+        <div id="modalSair" class="modal-card modal-small">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-arrow-right-from-bracket"></i> Terminar Sessão</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Tens a certeza de que pretendes encerrar a tua sessão no <strong>VixLegen</strong>?</p>
+            </div>
+            <div class="modal-footer modal-confirm-actions">
+                <button class="modal-btn destructive-confirm" id="btnConfirmarSair">SIM</button>
+                <button class="modal-btn cancel keep-primary" id="btnCancelarSair">NÃO</button>
+            </div>
+        </div>
+
+        <!-- MODAL: CONFIRMAÇÃO DE AÇÃO DESTRUTIVA -->
+        <div id="modalConfirmacao" class="modal-card modal-small modal-confirmation">
+            <div class="modal-header">
+                <h3 id="confirmacaoTitulo">Tem certeza?</h3>
+                <button class="modal-close" type="button" aria-label="Fechar">&times;</button>
+            </div>
+            <div class="modal-body text-center">
+                <p id="confirmacaoMensagem">Esta ação não poderá ser desfeita.</p>
+            </div>
+            <div class="modal-footer modal-confirm-actions">
+                <button class="modal-btn destructive-confirm" id="btnConfirmacaoSim" type="button">SIM</button>
+                <button class="modal-btn keep-primary" id="btnConfirmacaoNao" type="button">NÃO</button>
+            </div>
+        </div>
+
+        <!-- MODAL 4: AVISO / SUCESSO -->
+        <div id="modalAlerta" class="modal-card modal-small">
+            <div class="modal-header">
+                <h3 id="alertaTitulo"><i class="fa-solid fa-circle-check"></i> Sucesso</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body text-center">
+                <p id="alertaMensagem">Ação executada com sucesso!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn confirm" id="btnFecharAlerta">Entendido</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+    <script src="integration.js"></script>
+</body>
+</html>
