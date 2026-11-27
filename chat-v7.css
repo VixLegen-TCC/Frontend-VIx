@@ -23,3 +23,15 @@
 #sec-ia .v7-privacy { font-size:12px;line-height:1.55; margin-top:14px; }
 #sec-ia #chatInput { flex:1;min-width:0; }
 @media(max-width:760px){#sec-ia .v7-sidebar-actions{grid-template-columns:repeat(2,minmax(0,1fr));}#sec-ia #v7Conversations{max-height:160px;}#sec-ia .v7-text{font-size:12px;}}
+
+/* V7.2: documento privado por conversa */
+#sec-ia .v72-attachment, #sec-ia .v73-process { display:grid; gap:8px; padding:12px 0; border-top:1px solid #9f838855; margin-top:12px; min-width:0; }
+#sec-ia .v72-attachment strong, #sec-ia .v73-process strong { font-size:13px; }
+#sec-ia .v72-attachment button, #sec-ia .v73-process button { border:1px solid currentColor; border-radius:10px; padding:10px; background:transparent; color:inherit; font:inherit; cursor:pointer; text-align:left; }
+#sec-ia .v72-attachment button:disabled, #sec-ia .v73-process button:disabled { opacity:.5; cursor:not-allowed; }
+#sec-ia .v72-attachment .v7-note, #sec-ia .v73-process .v7-note { overflow-wrap:anywhere; }
+
+/* V7.3: seleção de processo */
+#sec-ia .v73-select {width:100%;min-width:0;border:1px solid currentColor;border-radius:8px;padding:9px;background:#fff;color:#382529;font:inherit;}
+body[data-theme="dark"] #sec-ia .v73-select {background:#30292c;color:#f5edef;}
+#sec-ia .v73-select:disabled {opacity:.55;}

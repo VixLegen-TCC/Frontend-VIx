@@ -80,6 +80,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const tokenDaRequisicao = state.token;
         const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
         const type = response.headers.get("content-type") || "";
+        // V7.4: resposta SSE não deve ser lida como JSON inteiro.
+        if (options.v74Stream === true && response.ok) {
+            if (tokenDaRequisicao !== state.token) {
+                await response.body?.cancel();
+                const erro = new Error("Sessão alterada durante a requisição");
+                erro.status = 401;
+                throw erro;
+            }
+            if (!type.includes("text/event-stream")) {
+                await response.body?.cancel();
+                throw new Error("Formato de streaming inesperado");
+            }
+            return response;
+        }
         const data = type.includes("application/json")
             ? await response.json().catch(() => null)
             : await response.text().catch(() => "");

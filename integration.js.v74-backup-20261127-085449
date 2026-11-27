@@ -1,0 +1,2123 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const API_BASE = window.VIXLEGEN_API_URL || "http://localhost:8080";
+
+    // O modo demo é DESLIGADO por padrão. Nunca autentica no backend.
+    // Só habilitar em apresentação local: window.VIXLEGEN_DEMO_MODE = true.
+    const DEMO_MODE = window.VIXLEGEN_DEMO_MODE === true;
+
+    // Usuário local de demonstração. A autenticação deste perfil acontece
+    // inteiramente no frontend e não realiza requisição ao backend.
+    const LOCAL_ADMIN = Object.freeze({
+        email: "admin@vixlegen",
+        senha: "Vix@2026",
+        usuario: {
+            idUsuario: 0,
+            nome: "Administrador Local",
+            email: "admin@vixlegen",
+            codigoCategoria: 1,
+            nivelAcesso: 1
+        }
+    });
+
+    // Tokens antigos do localStorage não são reutilizados (migração exige novo login).
+    localStorage.removeItem("vixlegen_token");
+    localStorage.removeItem("vixlegen_usuario");
+    localStorage.removeItem("vixlegen_local_admin");
+
+    const state = {
+        token: sessionStorage.getItem("vixlegen_token") || "",
+        usuario: JSON.parse(sessionStorage.getItem("vixlegen_usuario") || "null"),
+        localAdmin: DEMO_MODE && sessionStorage.getItem("vixlegen_local_admin") === "1",
+        clientes: [],
+        processos: [],
+        tarefas: [],
+        notificacoes: [],
+        status: new Map(),
+        categoriasDocumento: [],
+        documentoAtualId: null,
+        usuarioDetalhado: null,
+        aiFiles: []
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const validacaoModal = window.VixLegenModalValidation;
+    const chatV7 = window.VixChatV7.create({ api, authenticated: () => Boolean(state.token) && !state.localAdmin });
+
+    // Mostrar/ocultar senha sem enviar o formulário ou modificar a credencial.
+    document.querySelectorAll("[data-password-target]").forEach(button => {
+        button.addEventListener("click", () => {
+            const input = $(button.dataset.passwordTarget);
+            if (!input) return;
+
+            const mostrar = input.type === "password";
+            input.type = mostrar ? "text" : "password";
+            button.setAttribute("aria-pressed", String(mostrar));
+            button.setAttribute("aria-label", mostrar ? "Ocultar senha" : "Mostrar senha");
+            button.title = mostrar ? "Ocultar senha" : "Mostrar senha";
+
+            const icone = button.querySelector("i");
+            if (icone) icone.className = mostrar ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
+        });
+    });
+
+    async function api(path, options = {}) {
+        if (state.localAdmin) {
+            const error = new Error(
+                "O usuário administrativo local funciona sem conexão com o backend."
+            );
+            error.status = 0;
+            throw error;
+        }
+
+        const headers = new Headers(options.headers || {});
+        if (options.body && !headers.has("Content-Type")) {
+            headers.set("Content-Type", "application/json");
+        }
+        if (state.token) {
+            headers.set("Authorization", `Bearer ${state.token}`);
+        }
+
+        const tokenDaRequisicao = state.token;
+        const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+        const type = response.headers.get("content-type") || "";
+        const data = type.includes("application/json")
+            ? await response.json().catch(() => null)
+            : await response.text().catch(() => "");
+
+        // Evita que uma chamada antiga preencha a tela de outro usuário após logout.
+        if (path !== "/auth/login" && path !== "/auth/cadastro" && tokenDaRequisicao !== state.token) {
+            const alterada = new Error("Sessão alterada durante a requisição");
+            alterada.status = 401;
+            throw alterada;
+        }
+
+        if (!response.ok) {
+            // O corpo da API tem metadados técnicos (erroId, rota, status etc.):
+            // nunca apresentar o objeto inteiro ou o texto cru do MySQL ao usuário.
+            const mensagensPadrao = {
+                400: "Verifique os dados informados.",
+                401: "Faça login novamente.",
+                403: "Seu perfil não possui permissão para executar esta ação.",
+                404: "Registro não encontrado.",
+                409: "Este dado já está cadastrado ou está vinculado a outro registro.",
+                413: "O arquivo excede o tamanho permitido.",
+                422: "Os dados enviados não puderam ser processados.",
+                429: "Muitas tentativas. Aguarde e tente novamente.",
+                500: "Não foi possível concluir a operação. Tente novamente."
+            };
+            const textoApi = typeof data?.mensagem === "string"
+                ? data.mensagem
+                : (typeof data?.message === "string" ? data.message : "");
+            const mensagemSegura = textoApi.trim();
+            // Filtra erros legados contendo SQL, Java stacktrace ou respostas HTML.
+            const tecnica = /(?:SQL|SQLSTATE|constraint|Duplicate entry|at [\w.$]+\(|\bjava\.|\borg\.|<html|<!doctype|stacktrace|syntax error|jdbc|hibernate)/i.test(mensagemSegura);
+            const longa = mensagemSegura.length > 180;
+            let message = mensagemSegura && !tecnica && !longa
+                ? mensagemSegura
+                : (mensagensPadrao[response.status] || `Não foi possível concluir a operação (HTTP ${response.status}).`);
+            if (response.status >= 500) {
+                message = mensagensPadrao[500];
+            }
+
+            const error = new Error(
+                typeof message === "string"
+                    ? message
+                    : "Falha na comunicação com o servidor"
+            );
+            error.status = response.status;
+            error.erroId = data?.erroId || null;
+            error.campos = data?.campos || null;
+
+            // Se o JWT expirar ou for revogado, encerra a sessão imediatamente.
+            // Credenciais inválidas no formulário de login não encerram outro fluxo.
+            if (response.status === 401 && path !== "/auth/login") {
+                clearSession();
+                showAuth("login");
+                const feedback = $("loginErro");
+                if (feedback) {
+                    feedback.textContent = "Sua sessão expirou ou foi revogada. Entre novamente.";
+                    feedback.hidden = false;
+                }
+            }
+            throw error;
+        }
+        return data;
+    }
+
+    function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = String(value ?? "");
+        return div.innerHTML;
+    }
+
+    let confirmationResolver = null;
+
+    function openModal(id) {
+        validacaoModal.limpar(id);
+        document.querySelectorAll(".modal-card").forEach(m => m.classList.remove("active"));
+        $("modalOverlay")?.classList.add("active");
+        $(id)?.classList.add("active");
+    }
+
+    function closeModals() {
+        document.querySelectorAll(".modal-card").forEach(m => validacaoModal.limpar(m));
+        if (confirmationResolver) {
+            const resolve = confirmationResolver;
+            confirmationResolver = null;
+            resolve(false);
+        }
+
+        $("modalOverlay")?.classList.remove("active");
+        document.querySelectorAll(".modal-card").forEach(m => m.classList.remove("active"));
+    }
+
+    function confirmAction(title, message) {
+        return new Promise(resolve => {
+            confirmationResolver = resolve;
+
+            if ($("confirmacaoTitulo")) {
+                $("confirmacaoTitulo").textContent = title;
+            }
+
+            if ($("confirmacaoMensagem")) {
+                $("confirmacaoMensagem").textContent = message;
+            }
+
+            openModal("modalConfirmacao");
+
+            setTimeout(() => {
+                $("btnConfirmacaoNao")?.focus();
+            }, 0);
+        });
+    }
+
+    function answerConfirmation(confirmed) {
+        if (!confirmationResolver) return;
+
+        const resolve = confirmationResolver;
+        confirmationResolver = null;
+
+        $("modalOverlay")?.classList.remove("active");
+        document.querySelectorAll(".modal-card").forEach(m => m.classList.remove("active"));
+
+        resolve(confirmed);
+    }
+
+    $("btnConfirmacaoSim")?.addEventListener("click", () => {
+        answerConfirmation(true);
+    });
+
+    $("btnConfirmacaoNao")?.addEventListener("click", () => {
+        answerConfirmation(false);
+    });
+
+    $("modalOverlay")?.addEventListener("click", event => {
+        if (event.target === $("modalOverlay")) {
+            closeModals();
+        }
+    }, true);
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && $("modalOverlay")?.classList.contains("active")) {
+            closeModals();
+        }
+    });
+
+    function alertModal(title, message) {
+        if ($("alertaTitulo")) $("alertaTitulo").innerHTML = `<i class="fa-solid fa-circle-info"></i> ${escapeHtml(title)}`;
+        if ($("alertaMensagem")) $("alertaMensagem").textContent = message;
+        openModal("modalAlerta");
+    }
+
+    function showAuth(mode = "login") {
+        $("authShell")?.classList.remove("auth-hidden");
+        $("appLayout")?.classList.add("auth-hidden");
+        $("authLoginCard")?.classList.toggle("active", mode === "login");
+        $("authCadastroCard")?.classList.toggle("active", mode === "cadastro");
+    }
+
+    function showApp() {
+        $("authShell")?.classList.add("auth-hidden");
+        $("appLayout")?.classList.remove("auth-hidden");
+        document.querySelector('[data-target="sec-home"]')?.click();
+    }
+
+    // Conversa e anexos pertencem apenas à sessão corrente. Nunca reutilizar
+    // mensagens de outro login, mesmo em troca de conta na mesma aba.
+    function resetarChatSessao() {
+        state.aiFiles = [];
+        chatV7.reset();
+    }
+
+    function saveSession(data) {
+        resetarChatSessao();
+        state.localAdmin = false;
+        sessionStorage.removeItem("vixlegen_local_admin");
+
+        state.token = data.token;
+        state.usuario = {
+            idUsuario: data.idUsuario,
+            nome: data.nome,
+            email: data.email,
+            codigoCategoria: data.codigoCategoria,
+            nivelAcesso: data.nivelAcesso
+        };
+        sessionStorage.setItem("vixlegen_token", state.token);
+        sessionStorage.setItem("vixlegen_usuario", JSON.stringify(state.usuario));
+    }
+
+    function saveLocalAdminSession() {
+        resetarChatSessao();
+        state.localAdmin = true;
+        state.token = "";
+        state.usuario = { ...LOCAL_ADMIN.usuario };
+        state.usuarioDetalhado = {
+            primeiroNome: "Administrador",
+            ultimoNome: "Local",
+            email: LOCAL_ADMIN.email,
+            telefone: null,
+            cpf: null,
+            rg: null,
+            numeroOAB: null,
+            dataNascimento: null,
+            empresa: "VixLegen",
+            cidade: null,
+            estado: null,
+            cep: null
+        };
+
+        sessionStorage.removeItem("vixlegen_token");
+        sessionStorage.setItem("vixlegen_local_admin", "1");
+        sessionStorage.setItem("vixlegen_usuario", JSON.stringify(state.usuario));
+    }
+
+    function hydrateLocalAdminUi() {
+        state.clientes = [];
+        state.processos = [];
+        state.tarefas = [];
+        state.notificacoes = [];
+        state.status.clear();
+        state.categoriasDocumento = [];
+        state.documentoAtualId = null;
+
+        renderClientes();
+        renderProcessos();
+        renderTarefas();
+        renderNotificacoes();
+        fillClienteSelect();
+        fillProcessoSelect();
+        renderPerfilEmpresa();
+        limparFotoPerfilVisual();
+        atualizarHome();
+    }
+
+    function clearSession() {
+        state.token = "";
+        state.usuario = null;
+        state.localAdmin = false;
+        state.usuarioDetalhado = null;
+        state.documentoAtualId = null;
+        limparFotoPerfilVisual();
+        sessionStorage.removeItem("vixlegen_token");
+        sessionStorage.removeItem("vixlegen_usuario");
+        sessionStorage.removeItem("vixlegen_local_admin");
+        state.clientes = [];
+        state.processos = [];
+        state.tarefas = [];
+        state.notificacoes = [];
+        state.categoriasDocumento = [];
+        state.status.clear();
+        resetarChatSessao();
+        // Limpa os dados exibidos da conta anterior antes da próxima autenticação.
+        renderClientes();
+        renderProcessos();
+        renderTarefas();
+        renderNotificacoes();
+        atualizarHome();
+    }
+
+    async function encerrarSessao() {
+        let falhaRevogacao = false;
+        if (state.token && !state.localAdmin) {
+            try {
+                await api("/auth/logout", { method: "POST" });
+            } catch (error) {
+                if (error.status !== 401) falhaRevogacao = true;
+            }
+        }
+        clearSession();
+        closeModals();
+        showAuth("login");
+        if (falhaRevogacao) {
+            const feedback = $("loginErro");
+            if (feedback) {
+                feedback.textContent = "Sessão local encerrada, mas o servidor não confirmou a revogação. O token anterior pode continuar válido até expirar.";
+                feedback.hidden = false;
+            }
+        }
+    }
+
+    $("btnIrCadastro")?.addEventListener("click", () => showAuth("cadastro"));
+    $("btnIrLogin")?.addEventListener("click", () => showAuth("login"));
+
+    $("formLogin")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const errorEl = $("loginErro");
+        if (errorEl) errorEl.hidden = true;
+
+        const email = $("loginEmail").value.trim();
+        const senha = $("loginSenha").value;
+
+        // O e-mail administrativo é tratado 100% localmente:
+        // até uma senha incorreta não dispara chamada ao backend.
+        if (DEMO_MODE && email.toLowerCase() === LOCAL_ADMIN.email.toLowerCase()) {
+            if (senha !== LOCAL_ADMIN.senha) {
+                if (errorEl) {
+                    errorEl.textContent = "E-mail ou senha inválidos.";
+                    errorEl.hidden = false;
+                }
+                return;
+            }
+
+            saveLocalAdminSession();
+            showApp();
+            hydrateLocalAdminUi();
+            return;
+        }
+
+        try {
+            const data = await api("/auth/login", {
+                method: "POST",
+                body: JSON.stringify({
+                    email,
+                    senha
+                })
+            });
+
+            saveSession(data);
+            showApp();
+            await loadAll();
+        } catch (error) {
+            if (errorEl) {
+                errorEl.textContent = error.message;
+                errorEl.hidden = false;
+            }
+        }
+    });
+
+    $("formCadastro")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const errorEl = $("cadastroErro");
+        if (errorEl) errorEl.hidden = true;
+
+        const payload = {
+            primeiroNome: $("cadPrimeiroNome").value.trim(),
+            ultimoNome: $("cadUltimoNome").value.trim(),
+            email: $("cadEmail").value.trim(),
+            senha: $("cadSenha").value,
+            telefone: $("cadTelefone").value.trim(),
+            cpf: $("cadCpf").value.trim(),
+            rg: $("cadRg").value.trim(),
+            empresa: $("cadEmpresa").value.trim(),
+            numeroOAB: $("cadNumeroOab").value.trim(),
+            dataNascimento: $("cadDataNascimento").value,
+            estado: $("cadEstado").value.trim(),
+            cidade: $("cadCidade").value.trim(),
+            cep: $("cadCep").value.trim()
+        };
+
+        try {
+            await api("/auth/cadastro", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+            $("loginEmail").value = payload.email;
+            $("formCadastro").reset();
+            showAuth("login");
+            $("loginSenha")?.focus();
+        } catch (error) {
+            if (errorEl) {
+                errorEl.textContent = error.message;
+                errorEl.hidden = false;
+            }
+        }
+    });
+
+    async function loadClientes() {
+        if (!state.token) return;
+        state.clientes = await api("/clientes");
+        renderClientes();
+        fillClienteSelect();
+    }
+
+    function renderClientes() {
+        const body = $("clientesTableBody");
+        if (!body) return;
+
+        const query = ($("buscaClientes")?.value || "").trim().toLowerCase();
+        const items = state.clientes.filter(c =>
+            [c.nomeCompleto, c.cpf, c.cnpj, c.email, c.telefone]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase()
+                .includes(query)
+        );
+
+        $("clientesCount").textContent = `${items.length} cliente${items.length === 1 ? "" : "s"}`;
+
+        body.innerHTML = items.length
+            ? items.map(c => `
+                <tr>
+                    <td><div class="record-main"><strong>${escapeHtml(c.nomeCompleto)}</strong><span>ID #${c.idCliente}</span></div></td>
+                    <td>${escapeHtml(c.cpf || c.cnpj || "—")}</td>
+                    <td>${escapeHtml(c.email || "—")}</td>
+                    <td>${escapeHtml(c.telefone || "—")}</td>
+                    <td><div class="record-actions">
+                        <button class="record-more-btn" data-cliente-view="${c.idCliente}" title="Ver mais"><i class="fa-regular fa-eye"></i> Ver mais</button>
+                        <button class="record-icon-btn danger" data-cliente-delete="${c.idCliente}" title="Excluir"><i class="fa-regular fa-trash-can"></i></button>
+                    </div></td>
+                </tr>`).join("")
+            : '<tr class="records-placeholder"><td colspan="5">Nenhum cliente encontrado.</td></tr>';
+    }
+
+    function fillClienteSelect() {
+        const select = $("processoCliente");
+        if (!select) return;
+        select.innerHTML = '<option value="">Selecione um cliente</option>' +
+            state.clientes.map(c => `<option value="${c.idCliente}">${escapeHtml(c.nomeCompleto)}</option>`).join("");
+    }
+
+    $("buscaClientes")?.addEventListener("input", renderClientes);
+
+    $("btnNovoCliente")?.addEventListener("click", () => openModal("modalNovoCliente"));
+
+    $("clienteTipoDocumento")?.addEventListener("change", (event) => {
+        const cpf = event.target.value === "cpf";
+        $("clienteDocumentoLabel").textContent = cpf ? "CPF" : "CNPJ";
+        $("clienteDocumento").placeholder = cpf ? "000.000.000-00" : "00.000.000/0000-00";
+    });
+
+    $("btnSalvarCliente")?.addEventListener("click", async () => {
+        const tipo = $("clienteTipoDocumento").value;
+        const documento = $("clienteDocumento").value.trim();
+
+        const payload = {
+            nomeCompleto: $("clienteNome").value.trim(),
+            email: $("clienteEmail").value.trim(),
+            telefone: $("clienteTelefone").value.trim(),
+            cpf: tipo === "cpf" ? documento : null,
+            cnpj: tipo === "cnpj" ? documento : null,
+            usuarioResponsavelId: state.usuario?.idUsuario
+        };
+
+        if (!validacaoModal.validar("modalNovoCliente")) return;
+
+        try {
+            await api("/clientes", { method: "POST", body: JSON.stringify(payload) });
+            closeModals();
+            ["clienteNome", "clienteEmail", "clienteTelefone", "clienteDocumento"].forEach(id => { if ($(id)) $(id).value = ""; });
+            await loadClientes();
+            alertModal("Cliente cadastrado", "O cliente foi salvo com sucesso.");
+        } catch (error) {
+            validacaoModal.exibirErro("modalNovoCliente", error.message);
+        }
+    });
+
+    $("clientesTableBody")?.addEventListener("click", async (event) => {
+        const view = event.target.closest("[data-cliente-view]");
+        const remove = event.target.closest("[data-cliente-delete]");
+
+        if (view) {
+            const cliente = state.clientes.find(c => c.idCliente === Number(view.dataset.clienteView));
+            if (!cliente) return;
+
+            let processos = [];
+            try { processos = await api(`/clientes/${cliente.idCliente}/processos`); } catch (_) {}
+
+            $("detalhesTitulo").innerHTML = `<i class="fa-solid fa-user"></i> ${escapeHtml(cliente.nomeCompleto)}`;
+            $("detalhesConteudo").innerHTML =
+                detail("E-mail", cliente.email) +
+                detail("Telefone", cliente.telefone) +
+                detail(cliente.cpf ? "CPF" : "CNPJ", cliente.cpf || cliente.cnpj) +
+                detail("Processos vinculados", processos.length);
+            openModal("modalDetalhesRegistro");
+        }
+
+        if (remove) {
+            const id = Number(remove.dataset.clienteDelete);
+            const confirmado = await confirmAction(
+                "Tem certeza que quer excluir este cliente?",
+                "Ao confirmar, o cliente será removido. Se houver processos vinculados, o backend ainda bloqueará a exclusão."
+            );
+            if (!confirmado) return;
+            try {
+                await api(`/clientes/${id}`, { method: "DELETE" });
+                await loadClientes();
+            } catch (error) {
+                alertModal("Não foi possível excluir", error.message);
+            }
+        }
+    });
+
+    async function loadProcessos() {
+        if (!state.token) return;
+
+        state.processos = await api("/processos");
+        state.status.clear();
+
+        await Promise.allSettled(
+            state.processos.map(async p => {
+                try {
+                    state.status.set(p.idProcesso, await api(`/processos/${p.idProcesso}/situacao`));
+                } catch (_) {
+                    state.status.set(p.idProcesso, null);
+                }
+            })
+        );
+
+        renderProcessos();
+        fillProcessoSelect();
+    }
+
+    function renderProcessos() {
+        const body = $("processosTableBody");
+        if (!body) return;
+
+        const query = ($("buscaProcessos")?.value || "").trim().toLowerCase();
+        const statusFilter = $("filtroStatusProcesso")?.value || "";
+
+        const items = state.processos.filter(p => {
+            const status = state.status.get(p.idProcesso) || "";
+            const text = [p.numeroProcesso, p.cliente?.nomeCompleto, p.tribunal, p.comarca, p.vara]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase();
+            return text.includes(query) && (!statusFilter || status === statusFilter);
+        });
+
+        $("processosCount").textContent = `${items.length} processo${items.length === 1 ? "" : "s"}`;
+
+        body.innerHTML = items.length
+            ? items.map(p => `
+                <tr>
+                    <td><button class="process-record-link" type="button" data-processo-editor="${p.idProcesso}"><strong>${escapeHtml(p.numeroProcesso)}</strong><span>ID #${p.idProcesso}${p.segredoJustica ? " • Segredo de justiça" : ""}</span></button></td>
+                    <td>${escapeHtml(p.cliente?.nomeCompleto || "—")}</td>
+                    <td>${escapeHtml(p.tribunal || "—")}</td>
+                    <td>${escapeHtml(p.comarca || "—")}</td>
+                    <td>${statusPill(state.status.get(p.idProcesso))}</td>
+                    <td>${formatDate(p.dataAbertura)}${p.prazoProcessual ? `<small class="process-deadline">Prazo: ${escapeHtml(formatDate(p.prazoProcessual))}</small>` : ""}</td>
+                    <td><div class="record-actions">
+                        <button class="record-more-btn" data-processo-view="${p.idProcesso}" title="Ver mais"><i class="fa-regular fa-eye"></i> Ver mais</button>
+                        <button class="record-icon-btn" data-processo-editor="${p.idProcesso}" title="Abrir no editor"><i class="fa-solid fa-file-pen"></i></button>
+                        <button class="record-icon-btn danger" data-processo-delete="${p.idProcesso}" title="Excluir"><i class="fa-regular fa-trash-can"></i></button>
+                    </div></td>
+                </tr>`).join("")
+            : '<tr class="records-placeholder"><td colspan="7">Nenhum processo encontrado.</td></tr>';
+    }
+
+    $("buscaProcessos")?.addEventListener("input", renderProcessos);
+    $("filtroStatusProcesso")?.addEventListener("change", renderProcessos);
+
+    $("btnNovoProcesso")?.addEventListener("click", async () => {
+        if (!state.clientes.length) await loadClientes().catch(() => {});
+        fillClienteSelect();
+        $("processoDataAbertura").value = new Date().toISOString().slice(0, 10);
+        if ($("processoPrazoProcessual")) $("processoPrazoProcessual").value = "";
+        openModal("modalNovoProcesso");
+    });
+
+    $("btnSalvarProcesso")?.addEventListener("click", async () => {
+        const payload = {
+            numeroProcesso: $("processoNumero").value.trim(),
+            vara: $("processoVara").value.trim(),
+            comarca: $("processoComarca").value.trim(),
+            tribunal: $("processoTribunal").value.trim(),
+            instancia: $("processoInstancia").value.trim(),
+            segredoJustica: $("processoSegredo").checked,
+            dataAbertura: $("processoDataAbertura").value,
+            dataEncerramento: null,
+            prazoProcessual: $("processoPrazoProcessual")?.value || null,
+            clienteId: Number($("processoCliente").value)
+        };
+
+        const dataAtual = new Date();
+        const hojeLocal = [dataAtual.getFullYear(),
+            String(dataAtual.getMonth() + 1).padStart(2, "0"),
+            String(dataAtual.getDate()).padStart(2, "0")].join("-");
+
+        if (!validacaoModal.validar("modalNovoProcesso", {
+            processoNumero: campo => validarNumeroCnj(campo.value)
+                ? "" : "Informe um número CNJ válido, incluindo os dígitos verificadores.",
+            processoDataAbertura: campo => campo.value && campo.value > hojeLocal
+                ? "A data de abertura não pode estar no futuro." : ""
+        })) return;
+        try {
+            const processo = await api("/processos", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+
+            await api("/classificacoes-processo", {
+                method: "POST",
+                body: JSON.stringify({
+                    status: $("processoStatus").value,
+                    areaDireito: valorJuridico("processoAreaDireito","processoAreaOutro"),
+                    tipoAcao: $("processoTipoAcao").value.trim() || "Não informado",
+                    faseProcessual: valorJuridico("processoFase","processoFaseOutro"),
+                    descricaoObjeto: $("processoObjeto").value.trim() || "Não informado",
+                    processoId: processo.idProcesso
+                })
+            });
+
+            closeModals();
+            await loadProcessos();
+            await loadNotificacoes().catch(() => {});
+            alertModal("Processo cadastrado", "Processo e classificação foram salvos.");
+        } catch (error) {
+            validacaoModal.exibirErro("modalNovoProcesso", error.message);
+        }
+    });
+
+    $("processosTableBody")?.addEventListener("click", async (event) => {
+        const view = event.target.closest("[data-processo-view]");
+        const editor = event.target.closest("[data-processo-editor]");
+        const remove = event.target.closest("[data-processo-delete]");
+
+        if (view) {
+            const p = state.processos.find(x => x.idProcesso === Number(view.dataset.processoView));
+            if (!p) return;
+
+            $("detalhesTitulo").innerHTML = `<i class="fa-solid fa-scale-balanced"></i> Processo ${escapeHtml(p.numeroProcesso)}`;
+            $("detalhesConteudo").innerHTML =
+                detail("Cliente", p.cliente?.nomeCompleto) +
+                detail("Status", translateStatus(state.status.get(p.idProcesso))) +
+                detail("Tribunal", p.tribunal) +
+                detail("Vara", p.vara) +
+                detail("Comarca", p.comarca) +
+                detail("Instância", p.instancia) +
+                detail("Abertura", formatDate(p.dataAbertura)) +
+                detail("Próximo prazo", formatDate(p.prazoProcessual)) +
+                detail("Segredo de justiça", p.segredoJustica ? "Sim" : "Não");
+            openModal("modalDetalhesRegistro");
+        }
+
+        if (editor) {
+            const idProcesso = Number(editor.dataset.processoEditor);
+            $("selectMinutaProcesso").value = String(idProcesso);
+            await abrirProcessoNoEditor(idProcesso);
+            document.querySelector('[data-target="sec-editor"]')?.click();
+        }
+
+        if (remove) {
+            const id = Number(remove.dataset.processoDelete);
+            const confirmado = await confirmAction(
+                "Tem certeza que quer excluir este processo?",
+                "Esta ação remove o processo selecionado. Escolha NÃO para manter os dados."
+            );
+            if (!confirmado) return;
+            try {
+                await api(`/processos/${id}`, { method: "DELETE" });
+                await loadProcessos();
+            } catch (error) {
+                alertModal("Não foi possível excluir", error.message);
+            }
+        }
+    });
+
+
+    // Campos jurídicos: sugestões editáveis para não bloquear comarcas/varas não cadastradas.
+    const comarcasPorUf = {
+        SP:["São Paulo","Campinas","Santos","Guarulhos","Santo André","São Bernardo do Campo","Osasco","Ribeirão Preto","Sorocaba","São José dos Campos","Jundiaí","Bauru","Piracicaba"],
+        RJ:["Rio de Janeiro","Niterói","Duque de Caxias","Nova Iguaçu","Petrópolis","Volta Redonda","Campos dos Goytacazes"],
+        MG:["Belo Horizonte","Contagem","Uberlândia","Juiz de Fora","Montes Claros","Uberaba","Betim"],
+        PR:["Curitiba","Londrina","Maringá","Cascavel","Ponta Grossa","Foz do Iguaçu"],
+        RS:["Porto Alegre","Caxias do Sul","Pelotas","Santa Maria","Canoas"],
+        BA:["Salvador","Feira de Santana","Vitória da Conquista","Ilhéus","Itabuna"],
+        SC:["Florianópolis","Joinville","Blumenau","Chapecó","Criciúma"],
+        PE:["Recife","Olinda","Jaboatão dos Guararapes","Caruaru","Petrolina"],
+        CE:["Fortaleza","Caucaia","Juazeiro do Norte","Sobral"],
+        DF:["Brasília","Taguatinga","Ceilândia","Gama","Sobradinho"]
+    };
+    const tribEstados = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+    function setSugestoes(id, nomes) {
+        const list = $(id);
+        if (list) list.replaceChildren(...nomes.map(nome => {
+            const op = document.createElement("option");
+            op.value = nome;
+            return op;
+        }));
+    }
+    function atualizarSugestoesJuridicas() {
+        const uf = $("processoEstado")?.value;
+        setSugestoes("sugestoesComarcas", comarcasPorUf[uf] || []);
+        const tribunais = ["STF","STJ","TST","TSE","STM","TRF1","TRF2","TRF3","TRF4","TRF5","TRF6","TRT1","TRT2","TRT3","TRT4","TRT5","TRT6","TRT7","TRT8","TRT9","TRT10","TRT11","TRT12","TRT13","TRT14","TRT15","TRT16","TRT17","TRT18","TRT19","TRT20","TRT21","TRT22","TRT23","TRT24"].concat(tribEstados.map(e => "TJ"+e));
+        setSugestoes("sugestoesTribunais", uf ? ["TJ"+uf,...tribunais.filter(x => x !== "TJ"+uf)] : tribunais);
+    }
+    $("processoEstado")?.addEventListener("change", () => {
+        $("processoComarca").value = "";
+        atualizarSugestoesJuridicas();
+    });
+    atualizarSugestoesJuridicas();
+    [["processoAreaDireito","campoProcessoAreaOutro"],["processoFase","campoProcessoFaseOutro"]].forEach(([id, container]) => {
+        const update = () => {
+            const outro = ["OUTRO","OUTRA"].includes($(id).value);
+            $(container).hidden = !outro;
+            const extra = $(container).querySelector("input");
+            if (extra) extra.required = outro;
+        };
+        $(id)?.addEventListener("change", update);
+        update();
+    });
+    function valorJuridico(id, extraId) {
+        const valor = $(id)?.value.trim() || "";
+        return valor === "OUTRO" || valor === "OUTRA" ? ($(extraId)?.value.trim() || "") : valor;
+    }
+    function validarNumeroCnj(numero) {
+        const digits = numero.replace(/\D/g, "");
+        if (!/^\d{20}$/.test(digits)) return false;
+        // O dígito verificador é calculado pelos números base, ano, segmento, tribunal e unidade.
+        const base = digits.slice(0,7)+digits.slice(9);
+        const resto = BigInt(base+"00") % 97n;
+        return Number(98n-resto) === Number(digits.slice(7,9));
+    }
+    $("processoNumero")?.addEventListener("input", event => {
+        const d=event.target.value.replace(/\D/g,"").slice(0,20);
+        let result=d.slice(0,7);
+        if(d.length>7) result+="-"+d.slice(7,9);
+        if(d.length>9) result+="."+d.slice(9,13);
+        if(d.length>13) result+="."+d.slice(13,14);
+        if(d.length>14) result+="."+d.slice(14,16);
+        if(d.length>16) result+="."+d.slice(16,20);
+        event.target.value=result;
+    });
+
+    let fotoPerfilUrl = null;
+    function limparFotoPerfilVisual() {
+        if(fotoPerfilUrl){ URL.revokeObjectURL(fotoPerfilUrl); fotoPerfilUrl=null; }
+        const img=$("perfilFoto"); if(img){img.removeAttribute("src");img.hidden=true;}
+        if($("perfilIniciais")) $("perfilIniciais").hidden=false;
+        if($("btnRemoverFotoPerfil")) $("btnRemoverFotoPerfil").hidden=true;
+        if($("perfilFotoFeedback")) $("perfilFotoFeedback").textContent="";
+    }
+    async function carregarFotoPerfil() {
+        limparFotoPerfilVisual();
+        if (!state.token || state.localAdmin) {
+            if($("btnTrocarFotoPerfil")) $("btnTrocarFotoPerfil").disabled=true;
+            return;
+        }
+        if($("btnTrocarFotoPerfil")) $("btnTrocarFotoPerfil").disabled=false;
+        try {
+            const dados = await api("/auth/me/foto");
+            if(!dados?.foto) return;
+            const img=$("perfilFoto");
+            img.src=dados.foto;
+            img.hidden=false;
+            $("perfilIniciais").hidden=true;
+            $("btnRemoverFotoPerfil").hidden=false;
+        } catch(error) {
+            if($("perfilFotoFeedback")) $("perfilFotoFeedback").textContent="Não foi possível carregar a foto.";
+        }
+    }
+    $("btnTrocarFotoPerfil")?.addEventListener("click", () => {
+        if(state.token && !state.localAdmin) $("perfilFotoArquivo")?.click();
+    });
+    $("perfilFotoArquivo")?.addEventListener("change", async event => {
+        const file=event.target.files?.[0]; event.target.value="";
+        if(!file) return;
+        if(!["image/jpeg","image/png","image/webp"].includes(file.type) || file.size > 256*1024) {
+            return alertModal("Foto inválida","Use JPG, PNG ou WebP com até 256 KB.");
+        }
+        const base64=await new Promise((resolve,reject) => {
+            const leitor=new FileReader();
+            leitor.onload=()=>resolve(leitor.result);
+            leitor.onerror=()=>reject(new Error("Não foi possível ler a foto."));
+            leitor.readAsDataURL(file);
+        });
+        try {
+            await api("/auth/me/foto",{method:"PUT",body:JSON.stringify({foto:base64})});
+            await carregarFotoPerfil();
+        } catch(error){alertModal("Falha ao salvar a foto",error.message);}
+    });
+    $("btnRemoverFotoPerfil")?.addEventListener("click", async () => {
+        if (!state.token || state.localAdmin || $("btnRemoverFotoPerfil")?.hidden) return;
+        const confirmado = await confirmAction(
+            "Excluir foto de perfil?",
+            "Sua foto de perfil será removida. Deseja continuar?"
+        );
+        if (!confirmado) return;
+
+        const botao = $("btnRemoverFotoPerfil");
+        botao.disabled = true;
+        try {
+            await api("/auth/me/foto", { method: "DELETE" });
+            await carregarFotoPerfil();
+        } catch (error) {
+            alertModal("Falha ao remover foto", error.message);
+        } finally {
+            botao.disabled = false;
+        }
+    });
+
+    async function loadPerfil() {
+        if (!state.token) return;
+
+        state.usuarioDetalhado = await api("/auth/me");
+        renderPerfilEmpresa();
+        await carregarFotoPerfil();
+    }
+
+    function renderPerfilEmpresa() {
+        const u = state.usuarioDetalhado;
+        if (!u) return;
+
+        const nomeCompleto = [u.primeiroNome, u.ultimoNome]
+            .filter(Boolean)
+            .join(" ")
+            .trim();
+
+        const iniciais = [u.primeiroNome, u.ultimoNome]
+            .filter(Boolean)
+            .map(parte => parte.charAt(0).toUpperCase())
+            .join("")
+            .slice(0, 2) || "VL";
+
+        const categoria = ({
+            1: "Administrador Geral",
+            2: "Advogado Sênior",
+            3: "Advogado Júnior",
+            4: "Estagiário"
+        })[state.usuario?.nivelAcesso] || "Profissional VixLegen";
+
+        setText("perfilIniciais", iniciais);
+        setText("perfilNome", nomeCompleto || "Profissional");
+        setText("perfilCategoria", categoria);
+        setText("perfilOab", u.numeroOAB ? `OAB ${u.numeroOAB}` : "OAB não informada");
+        setText("perfilEmpresaTag", u.empresa || "Empresa não informada");
+        setText("perfilEmpresa", u.empresa || "Não informada");
+        setText("perfilNomeCompleto", nomeCompleto || "—");
+        setText("perfilRegistro", u.numeroOAB || "—");
+        setText("perfilCpf", u.cpf || "—");
+        setText("perfilEmail", u.email || "—");
+        setText("perfilTelefone", u.telefone || "—");
+        setText("perfilLocalizacao", [u.cidade, u.estado].filter(Boolean).join(" - ") || "—");
+        setText("perfilEmpresaDetalhe", u.empresa || "—");
+        setText("perfilNascimento", formatDate(u.dataNascimento));
+
+        setText("displayNomeEmpresa", u.empresa || "Empresa não informada");
+        setText("fieldEmpresaResponsavel", nomeCompleto || "—");
+        setText("fieldEmail", u.email || "—");
+        setText("fieldTelefone", u.telefone || "—");
+
+        const localizacao = [
+            [u.cidade, u.estado].filter(Boolean).join(" - "),
+            u.cep ? `CEP ${u.cep}` : ""
+        ].filter(Boolean).join(" • ");
+
+        setText("fieldEndereco", localizacao || "Localização não informada");
+    }
+
+    $("btnVerMaisPerfil")?.addEventListener("click", () => {
+        const u = state.usuarioDetalhado;
+        if (!u) return;
+
+        $("detalhesTitulo").innerHTML = '<i class="fa-regular fa-id-card"></i> Dados completos do perfil';
+        $("detalhesConteudo").innerHTML =
+            detail("Nome", [u.primeiroNome, u.ultimoNome].filter(Boolean).join(" ")) +
+            detail("E-mail", u.email) +
+            detail("Telefone", u.telefone) +
+            detail("CPF", u.cpf) +
+            detail("RG", u.rg) +
+            detail("Número OAB", u.numeroOAB) +
+            detail("Data de nascimento", formatDate(u.dataNascimento)) +
+            detail("Empresa", u.empresa) +
+            detail("Cidade", u.cidade) +
+            detail("Estado", u.estado) +
+            detail("CEP", u.cep);
+        openModal("modalDetalhesRegistro");
+    });
+
+    $("btnVerMaisEmpresa")?.addEventListener("click", () => {
+        const u = state.usuarioDetalhado;
+        if (!u) return;
+
+        $("detalhesTitulo").innerHTML = '<i class="fa-regular fa-building"></i> Dados da empresa vinculada';
+        $("detalhesConteudo").innerHTML =
+            detail("Empresa", u.empresa) +
+            detail("Responsável", [u.primeiroNome, u.ultimoNome].filter(Boolean).join(" ")) +
+            detail("E-mail", u.email) +
+            detail("Telefone", u.telefone) +
+            detail("Cidade", u.cidade) +
+            detail("Estado", u.estado) +
+            detail("CEP", u.cep) +
+            detail("CNPJ", "Não disponível no modelo atual do backend");
+        openModal("modalDetalhesRegistro");
+    });
+
+    function setText(id, value) {
+        const el = $(id);
+        if (el) el.textContent = value ?? "—";
+    }
+
+    async function loadTarefas() {
+        if (!state.token) return;
+        state.tarefas = await api("/tarefas");
+        renderTarefas();
+    }
+
+    function renderTarefas() {
+        const query = ($("buscaTarefas")?.value || "").trim().toLowerCase();
+        const prioridade = $("filtroPrioridadeTarefa")?.value || "";
+
+        const filtradas = state.tarefas.filter(tarefa => {
+            const texto = [
+                tarefa.tipoTarefa,
+                tarefa.descricao,
+                tarefa.processo?.numeroProcesso,
+                tarefa.processo?.cliente?.nomeCompleto
+            ].filter(Boolean).join(" ").toLowerCase();
+
+            return texto.includes(query)
+                && (!prioridade || (tarefa.prioridade || "MEDIA") === prioridade);
+        });
+
+        const grupos = {
+            PENDENTE: [],
+            EM_ANDAMENTO: [],
+            CONCLUIDA: []
+        };
+
+        filtradas.forEach(tarefa => {
+            const status = tarefa.status === "ATRASADA"
+                ? "PENDENTE"
+                : tarefa.status;
+
+            (grupos[status] || grupos.PENDENTE).push(tarefa);
+        });
+
+        renderTarefaColumn("kanbanPendente", grupos.PENDENTE);
+        renderTarefaColumn("kanbanAndamento", grupos.EM_ANDAMENTO);
+        renderTarefaColumn("kanbanConcluida", grupos.CONCLUIDA);
+
+        setText("countPendente", grupos.PENDENTE.length);
+        setText("countAndamento", grupos.EM_ANDAMENTO.length);
+        setText("countConcluida", grupos.CONCLUIDA.length);
+
+        bindTaskDrag();
+    }
+
+    function renderTarefaColumn(id, tarefas) {
+        const container = $(id);
+        if (!container) return;
+
+        if (!tarefas.length) {
+            container.innerHTML = '<div class="kanban-empty">Solte um card aqui ou crie uma nova tarefa.</div>';
+            return;
+        }
+
+        container.innerHTML = tarefas
+            .sort((a, b) => new Date(a.prazo) - new Date(b.prazo))
+            .map(tarefa => taskCardHtml(tarefa))
+            .join("");
+    }
+
+    function taskCardHtml(tarefa) {
+        const prioridade = tarefa.prioridade || "MEDIA";
+        const processo = tarefa.processo?.numeroProcesso || "Sem processo";
+        const prazo = formatDateTime(tarefa.prazo);
+        const atrasada = tarefa.status === "ATRASADA"
+            || (tarefa.status !== "CONCLUIDA" && new Date(tarefa.prazo) < new Date());
+
+        return `
+            <article class="task-card priority-${prioridade}"
+                     draggable="true"
+                     data-task-id="${tarefa.idTarefa}">
+                <div class="task-card-head">
+                    <div class="task-card-title">
+                        <h3>${escapeHtml(tarefa.tipoTarefa)}</h3>
+                    </div>
+                    <div class="task-card-actions">
+                        <button class="task-card-action"
+                                type="button"
+                                data-task-edit="${tarefa.idTarefa}"
+                                title="Editar card">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                        </button>
+                        <button class="task-card-action"
+                                type="button"
+                                data-task-delete="${tarefa.idTarefa}"
+                                title="Excluir card">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+                ${tarefa.descricao
+                    ? `<p class="task-card-description">${escapeHtml(tarefa.descricao)}</p>`
+                    : ""}
+                <div class="task-card-meta">
+                    <span class="task-chip priority-${prioridade}">
+                        <i class="fa-solid fa-flag"></i>
+                        ${translatePrioridade(prioridade)}
+                    </span>
+                    <span class="task-chip">
+                        <i class="fa-regular fa-calendar"></i>
+                        ${escapeHtml(prazo)}
+                    </span>
+                    <span class="task-chip">
+                        <i class="fa-solid fa-scale-balanced"></i>
+                        ${escapeHtml(processo)}
+                    </span>
+                    ${atrasada
+                        ? '<span class="task-chip priority-URGENTE"><i class="fa-solid fa-triangle-exclamation"></i> Atrasada</span>'
+                        : ""}
+                </div>
+            </article>
+        `;
+    }
+
+    function bindTaskDrag() {
+        document.querySelectorAll(".task-card").forEach(card => {
+            card.addEventListener("dragstart", event => {
+                card.classList.add("dragging");
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", card.dataset.taskId);
+            });
+
+            card.addEventListener("dragend", () => {
+                card.classList.remove("dragging");
+                document.querySelectorAll(".kanban-dropzone")
+                    .forEach(zone => zone.classList.remove("drag-over"));
+            });
+        });
+    }
+
+    document.querySelectorAll(".kanban-dropzone").forEach(zone => {
+        zone.addEventListener("dragover", event => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            zone.classList.add("drag-over");
+        });
+
+        zone.addEventListener("dragleave", event => {
+            if (!zone.contains(event.relatedTarget)) {
+                zone.classList.remove("drag-over");
+            }
+        });
+
+        zone.addEventListener("drop", async event => {
+            event.preventDefault();
+            zone.classList.remove("drag-over");
+
+            const id = Number(event.dataTransfer.getData("text/plain"));
+            const tarefa = state.tarefas.find(item => item.idTarefa === id);
+            const novoStatus = zone.dataset.status;
+
+            if (!tarefa || !novoStatus || tarefa.status === novoStatus) return;
+
+            const statusAnterior = tarefa.status;
+            tarefa.status = novoStatus;
+            renderTarefas();
+
+            try {
+                const atualizada = await api(`/tarefas/${id}/status`, {
+                    method: "PATCH",
+                    body: JSON.stringify({ status: novoStatus })
+                });
+
+                const index = state.tarefas.findIndex(item => item.idTarefa === id);
+                if (index >= 0) state.tarefas[index] = atualizada;
+                renderTarefas();
+            } catch (error) {
+                tarefa.status = statusAnterior;
+                renderTarefas();
+                alertModal("Não foi possível mover o card", error.message);
+            }
+        });
+    });
+
+    $("buscaTarefas")?.addEventListener("input", renderTarefas);
+    $("filtroPrioridadeTarefa")?.addEventListener("change", renderTarefas);
+
+    function preencherProcessosTarefa(selected = "") {
+        const select = $("selectProcessoTarefa");
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Selecione um processo</option>' +
+            state.processos.map(processo =>
+                `<option value="${processo.idProcesso}">
+                    ${escapeHtml(processo.numeroProcesso)}
+                    ${processo.cliente?.nomeCompleto
+                        ? " — " + escapeHtml(processo.cliente.nomeCompleto)
+                        : ""}
+                </option>`
+            ).join("");
+
+        select.value = selected ? String(selected) : "";
+    }
+
+    function abrirNovaTarefa() {
+        $("tarefaIdEdicao").value = "";
+        $("tituloModalTarefa").innerHTML = '<i class="fa-solid fa-note-sticky"></i> Novo Card';
+        $("inputTituloTarefa").value = "";
+        $("inputDescricaoTarefa").value = "";
+        $("selectPrioridadeTarefa").value = "MEDIA";
+        $("selectStatusTarefa").value = "PENDENTE";
+        $("btnExcluirTarefa").classList.add("task-delete-hidden");
+        preencherProcessosTarefa();
+
+        const prazo = new Date();
+        prazo.setDate(prazo.getDate() + 1);
+        prazo.setHours(18, 0, 0, 0);
+        $("inputPrazoTarefa").value = toDateTimeLocal(prazo);
+
+        openModal("modalNovaTarefa");
+    }
+
+    function abrirEditarTarefa(id) {
+        const tarefa = state.tarefas.find(item => item.idTarefa === id);
+        if (!tarefa) return;
+
+        $("tarefaIdEdicao").value = String(tarefa.idTarefa);
+        $("tituloModalTarefa").innerHTML = '<i class="fa-regular fa-pen-to-square"></i> Editar Card';
+        $("inputTituloTarefa").value = tarefa.tipoTarefa || "";
+        $("inputDescricaoTarefa").value = tarefa.descricao || "";
+        $("inputPrazoTarefa").value = toDateTimeLocal(new Date(tarefa.prazo));
+        $("selectPrioridadeTarefa").value = tarefa.prioridade || "MEDIA";
+        $("selectStatusTarefa").value = tarefa.status === "ATRASADA" ? "PENDENTE" : tarefa.status;
+        preencherProcessosTarefa(tarefa.processo?.idProcesso);
+        $("btnExcluirTarefa").classList.remove("task-delete-hidden");
+
+        openModal("modalNovaTarefa");
+    }
+
+    async function salvarTarefa() {
+        const id = Number($("tarefaIdEdicao")?.value || 0);
+        const titulo = $("inputTituloTarefa").value.trim();
+        const descricao = $("inputDescricaoTarefa").value.trim();
+        const prazo = $("inputPrazoTarefa").value;
+        const processoId = Number($("selectProcessoTarefa").value);
+
+        if (!validacaoModal.validar("modalNovaTarefa")) return;
+
+        const payload = {
+            tipoTarefa: titulo,
+            descricao: descricao || null,
+            prazo: localInputToIso(prazo),
+            status: $("selectStatusTarefa").value,
+            prioridade: $("selectPrioridadeTarefa").value,
+            processoId,
+            usuarioResponsavelId: state.usuario?.idUsuario
+        };
+
+        try {
+            if (id) {
+                await api(`/tarefas/${id}`, {
+                    method: "PUT",
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                await api("/tarefas", {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            closeModals();
+            await loadTarefas();
+        } catch (error) {
+            validacaoModal.exibirErro("modalNovaTarefa", error.message);
+        }
+    }
+
+    async function excluirTarefa(id) {
+        if (!id) return;
+        const confirmado = await confirmAction(
+            "Tem certeza que quer excluir este card?",
+            "O card será removido permanentemente. Escolha NÃO para cancelar e manter a tarefa."
+        );
+        if (!confirmado) return;
+
+        try {
+            await api(`/tarefas/${id}`, {
+                method: "DELETE"
+            });
+
+            closeModals();
+            await loadTarefas();
+        } catch (error) {
+            alertModal(
+                "Não foi possível excluir o card",
+                error.message
+            );
+        }
+    }
+
+    // Captura os controles de tarefa antes dos listeners antigos do protótipo.
+    document.addEventListener("click", event => {
+        const novo = event.target.closest("#btnNovaTarefa");
+        const salvar = event.target.closest("#btnConfirmarTarefa");
+        const excluirModal = event.target.closest("#btnExcluirTarefa");
+        const editarCard = event.target.closest("[data-task-edit]");
+        const excluirCard = event.target.closest("[data-task-delete]");
+
+        if (novo) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            abrirNovaTarefa();
+            return;
+        }
+
+        if (salvar) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            salvarTarefa();
+            return;
+        }
+
+        if (excluirModal) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            excluirTarefa(Number($("tarefaIdEdicao").value));
+            return;
+        }
+
+        if (editarCard) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            abrirEditarTarefa(Number(editarCard.dataset.taskEdit));
+            return;
+        }
+
+        if (excluirCard) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            excluirTarefa(Number(excluirCard.dataset.taskDelete));
+        }
+    }, true);
+
+    function translatePrioridade(value) {
+        return ({
+            BAIXA: "Baixa",
+            MEDIA: "Média",
+            ALTA: "Alta",
+            URGENTE: "Urgente"
+        })[value] || "Média";
+    }
+
+    function formatDateTime(value) {
+        if (!value) return "Sem prazo";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+
+        return date.toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    }
+
+    function toDateTimeLocal(date) {
+        const pad = value => String(value).padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function localInputToIso(value) {
+        return value.length === 16
+            ? `${value}:00`
+            : value;
+    }
+
+    async function loadNotificacoes() {
+        if (!state.token || state.localAdmin) return;
+        const tokenNaConsulta = state.token;
+        const notificacoes = await api("/notificacoes/minhas");
+        if (state.token !== tokenNaConsulta || state.localAdmin) return;
+        state.notificacoes = notificacoes;
+        renderNotificacoes();
+        atualizarHome();
+    }
+
+    // Atualiza o sino sem depender de navegação manual.
+    setInterval(() => {
+        if (state.token && !state.localAdmin && !document.hidden) {
+            loadNotificacoes().catch(error => console.warn("Falha ao consultar alertas:", error));
+        }
+    }, 60000);
+
+    function renderNotificacoes() {
+        const container = $("notificationsList");
+        if (!container) return;
+
+        const activeFilter = document.querySelector(".notif-filter.active")?.dataset.filter || "all";
+
+        const filtradas = state.notificacoes.filter(notificacao => {
+            if (activeFilter === "all") return true;
+            if (activeFilter === "nao-lidas") return !notificacao.lida;
+            if (activeFilter === "prazo") return Boolean(notificacao.etapaAlerta);
+            if (activeFilter === "tarefa") return notificacao.tipoReferencia === "TAREFA" || (notificacao.canal || "").toLowerCase() === "tarefa";
+            if (activeFilter === "processo") return notificacao.tipoReferencia === "PROCESSO" || (notificacao.canal || "").toLowerCase() === "processo";
+            return notificacao.status === activeFilter;
+        });
+
+        const naoLidas = state.notificacoes.filter(n => !n.lida).length;
+        const hoje = new Date();
+        const hojeCount = state.notificacoes.filter(n => {
+            if (!n.dataEnvio) return false;
+            const d = new Date(n.dataEnvio);
+            return d.getFullYear() === hoje.getFullYear()
+                && d.getMonth() === hoje.getMonth()
+                && d.getDate() === hoje.getDate();
+        }).length;
+
+        setText("notifUnreadCount", naoLidas);
+        setText("notifTotalCount", state.notificacoes.length);
+        setText("notifTodayCount", hojeCount);
+
+        const badge = $("badgeNotifCount");
+        if (badge) {
+            badge.textContent = String(naoLidas);
+            badge.style.display = naoLidas > 0 ? "flex" : "none";
+        }
+
+        if (!filtradas.length) {
+            container.innerHTML = `
+                <div class="notifications-empty">
+                    <i class="fa-regular fa-bell-slash"></i>
+                    <strong>Nenhuma notificação neste filtro</strong>
+                    <span>Quando houver novidades, elas aparecerão aqui.</span>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = filtradas.map(notificacao => {
+            const unread = !notificacao.lida;
+            const status = notificacao.status || "PENDENTE";
+            const canal = notificacao.canal || "Sistema";
+            const icon = notificationIcon(canal, status);
+
+            return `
+                <article class="notification-item ${unread ? "unread" : ""}"
+                         data-notification-id="${notificacao.idNotificacao}">
+                    <div class="notif-accent"></div>
+                    <div class="notif-symbol ${notificationClass(canal, status)}">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="notif-main">
+                        <div class="notif-heading-row">
+                            <span class="notif-category">${escapeHtml(canal)}</span>
+                            ${unread ? '<span class="notif-unread-dot" title="Não lida"></span>' : ""}
+                        </div>
+                        <h3>${escapeHtml(notificationTitle(notificacao))}</h3>
+                        <p>${escapeHtml(notificacao.mensagem || "Sem detalhes.")}</p>
+                        <div class="notif-meta">
+                            <span><i class="fa-regular fa-clock"></i> ${escapeHtml(formatDateTime(notificacao.dataEnvio))}</span>
+                            <span>${escapeHtml(translateNotificationStatus(status))}</span>
+                        </div>
+                    </div>
+                    <div class="notif-actions">
+                        <button class="notif-action" type="button"
+                                data-notification-view="${notificacao.idNotificacao}">
+                            ${notificacao.referenciaId ? (notificacao.tipoReferencia === "TAREFA" ? "Abrir tarefa" : "Abrir processo") : "Ver detalhes"}
+                        </button>
+                        ${unread ? `
+                            <button class="notif-icon-btn" type="button"
+                                    data-notification-read="${notificacao.idNotificacao}"
+                                    title="Marcar como lida">
+                                <i class="fa-regular fa-circle-check"></i>
+                            </button>
+                        ` : ""}
+                    </div>
+                </article>
+            `;
+        }).join("");
+    }
+
+    document.querySelectorAll(".notif-filter").forEach(button => {
+        button.addEventListener("click", event => {
+            event.preventDefault();
+            document.querySelectorAll(".notif-filter")
+                .forEach(item => item.classList.remove("active"));
+            button.classList.add("active");
+            renderNotificacoes();
+        }, true);
+    });
+
+    $("btnMarcarTodasLidas")?.addEventListener("click", async event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        try {
+            await api("/notificacoes/minhas/lidas", {
+                method: "PATCH"
+            });
+
+            state.notificacoes.forEach(n => n.lida = true);
+            renderNotificacoes();
+        } catch (error) {
+            alertModal("Falha ao atualizar notificações", error.message);
+        }
+    }, true);
+
+    $("notificationsList")?.addEventListener("click", async event => {
+        const readButton = event.target.closest("[data-notification-read]");
+        const viewButton = event.target.closest("[data-notification-view]");
+
+        if (readButton) {
+            const id = Number(readButton.dataset.notificationRead);
+
+            try {
+                const atualizada = await api(`/notificacoes/${id}/lida`, {
+                    method: "PATCH"
+                });
+
+                const index = state.notificacoes.findIndex(n => n.idNotificacao === id);
+                if (index >= 0) state.notificacoes[index] = atualizada;
+                renderNotificacoes();
+            } catch (error) {
+                alertModal("Falha ao atualizar notificação", error.message);
+            }
+
+            return;
+        }
+
+        if (viewButton) {
+            const id = Number(viewButton.dataset.notificationView);
+            const notificacao = state.notificacoes.find(n => n.idNotificacao === id);
+            if (!notificacao) return;
+
+            // Navega diretamente para o recurso que gerou o prazo.
+            if (notificacao.referenciaId && notificacao.tipoReferencia === "TAREFA") {
+                document.querySelector('[data-target="sec-tarefas"]')?.click();
+                abrirEditarTarefa(Number(notificacao.referenciaId));
+                if (!notificacao.lida) {
+                    try { await api(`/notificacoes/${id}/lida`, { method: "PATCH" }); await loadNotificacoes(); } catch (_) {}
+                }
+                return;
+            }
+            if (notificacao.referenciaId && notificacao.tipoReferencia === "PROCESSO") {
+                document.querySelector('[data-target="sec-processos"]')?.click();
+                const processButton = document.querySelector(`[data-processo-view="${Number(notificacao.referenciaId)}"]`);
+                if (processButton) processButton.click();
+                if (!notificacao.lida) {
+                    try { await api(`/notificacoes/${id}/lida`, { method: "PATCH" }); await loadNotificacoes(); } catch (_) {}
+                }
+                return;
+            }
+
+            abrirDetalhesNotificacao(notificacao);
+
+            if (!notificacao.lida) {
+                try {
+                    const atualizada = await api(`/notificacoes/${id}/lida`, {
+                        method: "PATCH"
+                    });
+                    const index = state.notificacoes.findIndex(n => n.idNotificacao === id);
+                    if (index >= 0) state.notificacoes[index] = atualizada;
+                    renderNotificacoes();
+
+                    // A leitura foi confirmada pelo backend; reflita-a apenas
+                    // se o usuário ainda estiver vendo esta notificação.
+                    const modal = $("modalDetalhesNotificacao");
+                    if (modal?.classList.contains("active") && modal.dataset.notificationId === String(id)) {
+                        atualizarLeituraDetalheNotificacao(true);
+                    }
+                } catch (_) {}
+            }
+        }
+    });
+
+    function atualizarLeituraDetalheNotificacao(lida) {
+        const indicador = $("notifDetailLeitura");
+        if (!indicador) return;
+        indicador.classList.toggle("is-unread", !lida);
+        indicador.innerHTML = lida
+            ? '<i class="fa-regular fa-circle-check" aria-hidden="true"></i> Lida'
+            : '<i class="fa-regular fa-envelope" aria-hidden="true"></i> Não lida';
+    }
+
+    function abrirDetalhesNotificacao(notificacao) {
+        const modal = $("modalDetalhesNotificacao");
+        if (!modal) return;
+
+        const canal = notificacao.canal || "Sistema";
+        const status = notificacao.status || "PENDENTE";
+        const tom = notificationClass(canal, status) || "neutral";
+        const statusIcon = ({
+            PENDENTE: "fa-regular fa-clock",
+            ENVIADA: "fa-regular fa-circle-check",
+            CANCELADA: "fa-solid fa-ban"
+        })[status] || "fa-regular fa-bell";
+
+        modal.dataset.notificationId = String(notificacao.idNotificacao);
+        modal.dataset.tone = tom;
+        $("notifDetailCategoria").textContent = canal;
+        $("notifDetailTitulo").textContent = notificationTitle(notificacao);
+        $("notifDetailCanal").textContent = canal;
+        $("notifDetailData").textContent = formatDateTime(notificacao.dataEnvio);
+        $("notifDetailMensagem").textContent = notificacao.mensagem || "Nenhuma descrição disponível.";
+        $("notifDetailIcon").firstElementChild.className = notificationIcon(canal, status);
+        $("notifDetailStatus").innerHTML =
+            `<i class="${statusIcon}" aria-hidden="true"></i> ${escapeHtml(translateNotificationStatus(status))}`;
+        atualizarLeituraDetalheNotificacao(Boolean(notificacao.lida));
+
+        openModal("modalDetalhesNotificacao");
+        modal.querySelector(".modal-close")?.focus();
+    }
+
+    function notificationTitle(notificacao) {
+        const mensagem = (notificacao.mensagem || "").trim();
+        if (!mensagem) return "Nova notificação";
+
+        const primeiraFrase = mensagem.split(/[.!?]/)[0].trim();
+        return primeiraFrase.length > 70
+            ? primeiraFrase.slice(0, 67) + "..."
+            : primeiraFrase;
+    }
+
+    function notificationIcon(canal, status) {
+        const texto = `${canal} ${status}`.toLowerCase();
+
+        if (texto.includes("prazo")) return "fa-solid fa-hourglass-half";
+        if (texto.includes("tarefa")) return "fa-solid fa-list-check";
+        if (texto.includes("process")) return "fa-solid fa-scale-balanced";
+        if (texto.includes("document")) return "fa-solid fa-file-lines";
+        if (status === "CANCELADA") return "fa-solid fa-ban";
+        return "fa-regular fa-bell";
+    }
+
+    function notificationClass(canal, status) {
+        if (status === "CANCELADA") return "danger";
+        const texto = (canal || "").toLowerCase();
+        if (texto.includes("prazo")) return "danger";
+        if (texto.includes("tarefa")) return "task";
+        if (texto.includes("process")) return "process";
+        if (texto.includes("document")) return "document";
+        return status === "ENVIADA" ? "success" : "";
+    }
+
+    function translateNotificationStatus(status) {
+        return ({
+            PENDENTE: "Pendente",
+            ENVIADA: "Enviada",
+            CANCELADA: "Cancelada"
+        })[status] || status || "—";
+    }
+
+    function atualizarHome() {
+        setText("homeProcessosCount", state.processos.length);
+        setText("homeClientesCount", state.clientes.length);
+        setText(
+            "homeTarefasCount",
+            state.tarefas.filter(t => t.status !== "CONCLUIDA").length
+        );
+
+        const naoLidas = state.notificacoes.filter(n => !n.lida).length;
+        setText("homeNotifCount", naoLidas);
+
+        const preview = $("homeNotificationsPreview");
+        if (!preview) return;
+
+        const ultimas = state.notificacoes.slice(0, 3);
+
+        preview.innerHTML = ultimas.length
+            ? ultimas.map(n => `
+                <div class="home-notif-item">
+                    <i class="fa-regular fa-bell"></i>
+                    <div>
+                        <strong>${escapeHtml(n.canal || "Sistema")}</strong>
+                        <span>${escapeHtml(n.mensagem || "Nova notificação")}</span>
+                    </div>
+                </div>
+            `).join("")
+            : '<div class="home-empty">Nenhuma notificação disponível.</div>';
+    }
+
+    const temaSalvo = localStorage.getItem("vixlegen_theme") || "light";
+    aplicarTema(temaSalvo);
+
+    function alternarTema() {
+        const proximo = document.body.dataset.theme === "dark"
+            ? "light"
+            : "dark";
+
+        aplicarTema(proximo);
+    }
+
+    $("btnTema")?.addEventListener("click", alternarTema);
+    $("btnTemaAuth")?.addEventListener("click", alternarTema);
+
+    $("btnTema")?.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            alternarTema();
+        }
+    });
+
+    function aplicarTema(tema) {
+        document.body.dataset.theme = tema;
+        localStorage.setItem("vixlegen_theme", tema);
+
+        const homeLogo = document.querySelector(".home-logo");
+        if (homeLogo) {
+            homeLogo.src = tema === "dark"
+                ? "./img/LogoVL_WHITE.png"
+                : "./img/LogoVL_RED.png";
+        }
+
+        ["iconeTema", "iconeTemaAuth"].forEach(id => {
+            const icon = $(id);
+            if (icon) {
+                icon.className = tema === "dark"
+                    ? "fa-solid fa-sun"
+                    : "fa-solid fa-moon";
+            }
+        });
+
+        const label = tema === "dark"
+            ? "Usar tema claro"
+            : "Usar tema escuro";
+
+        const btnApp = $("btnTema");
+        if (btnApp) {
+            btnApp.dataset.tooltip = label;
+            btnApp.setAttribute("aria-label", label);
+        }
+
+        const btnAuth = $("btnTemaAuth");
+        if (btnAuth) {
+            btnAuth.setAttribute("aria-label", label);
+            const span = btnAuth.querySelector("span");
+            if (span) span.textContent = tema === "dark" ? "Claro" : "Escuro";
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    $("btnEnviarChat")?.addEventListener("click", enviarMensagemIa);
+
+    $("chatInput")?.addEventListener("keydown", event => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            enviarMensagemIa();
+        }
+    });
+
+    function enviarMensagemIa() {
+        return chatV7.send();
+    }
+
+    async function loadCategoriasDocumento() {
+        if (!state.token) return;
+        state.categoriasDocumento = await api("/categorias-documento");
+
+        const select = $("selectMinutaCategoria");
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Categoria...</option>' +
+            state.categoriasDocumento
+                .map(c => `<option value="${c.codigoCategoriaDocumento}">${escapeHtml(c.descricao)}</option>`)
+                .join("");
+
+        if (!state.categoriasDocumento.length) {
+            select.innerHTML = '<option value="">Nenhuma categoria cadastrada</option>';
+            select.disabled = true;
+            return;
+        }
+
+        select.disabled = false;
+
+        const preferida = state.categoriasDocumento.find(c =>
+            /peti[cç][aã]o inicial/i.test(c.descricao || "")
+        );
+
+        if (preferida) {
+            select.value = String(preferida.codigoCategoriaDocumento);
+        } else {
+            select.value = String(state.categoriasDocumento[0].codigoCategoriaDocumento);
+        }
+    }
+
+    function fillProcessoSelect() {
+        const select = $("selectMinutaProcesso");
+        if (!select) return;
+
+        const previous = select.value;
+        select.innerHTML = '<option value="">Processo...</option>' +
+            state.processos.map(p =>
+                `<option value="${p.idProcesso}">${escapeHtml(p.numeroProcesso)}${p.cliente?.nomeCompleto ? " — " + escapeHtml(p.cliente.nomeCompleto) : ""}</option>`
+            ).join("");
+
+        if ([...select.options].some(o => o.value === previous)) {
+            select.value = previous;
+        }
+    }
+
+    $("selectMinutaProcesso")?.addEventListener("change", async event => {
+        const idProcesso = Number(event.target.value);
+
+        if (!idProcesso) {
+            state.documentoAtualId = null;
+            return;
+        }
+
+        await abrirProcessoNoEditor(idProcesso);
+    });
+
+    async function abrirProcessoNoEditor(idProcesso) {
+        if (!idProcesso) return;
+
+        try {
+            const documentos = await api(`/documentos/processo/${idProcesso}`);
+
+            const documento = [...documentos]
+                .sort((a, b) =>
+                    new Date(b.dataCadastro || 0) - new Date(a.dataCadastro || 0)
+                )[0];
+
+            if (documento) {
+                state.documentoAtualId = documento.idDocumento;
+                $("docTitle").value = documento.nome || `Minuta_Processo_${idProcesso}`;
+                $("paperEditor").innerHTML = documento.conteudo || "<p><br></p>";
+
+                if (documento.categoriaDocumento?.codigoCategoriaDocumento) {
+                    $("selectMinutaCategoria").value =
+                        String(documento.categoriaDocumento.codigoCategoriaDocumento);
+                }
+            } else {
+                state.documentoAtualId = null;
+                $("docTitle").value = `Minuta_Processo_${idProcesso}`;
+
+                const processo = state.processos.find(
+                    p => p.idProcesso === idProcesso
+                );
+
+                $("paperEditor").innerHTML = `
+                    <h2 style="text-align:center; font-weight:bold; margin-bottom:25px;">
+                        MINUTA DO PROCESSO
+                    </h2>
+                    <p><strong>Processo:</strong> ${escapeHtml(
+                        processo?.numeroProcesso || String(idProcesso)
+                    )}</p>
+                    <p><br></p>
+                `;
+            }
+
+            $("paperEditor").dispatchEvent(new Event("input"));
+            scheduleEditorPagination(0);
+        } catch (error) {
+            alertModal(
+                "Não foi possível abrir a minuta",
+                error.message
+            );
+        }
+    }
+
+    // Paginação visual no estilo Word. Os separadores são apenas de interface
+    // e são removidos antes de persistir a minuta no backend.
+    let paginationTimer = null;
+    let isPaginatingEditor = false;
+
+    function getEditorCleanHtml() {
+        const editor = $("paperEditor");
+        if (!editor) return "";
+
+        const clone = editor.cloneNode(true);
+        clone.querySelectorAll(".editor-page-break").forEach(node => node.remove());
+
+        return clone.innerHTML;
+    }
+
+    function scheduleEditorPagination(delay = 220) {
+        clearTimeout(paginationTimer);
+        paginationTimer = setTimeout(paginateEditor, delay);
+    }
+
+    function paginateEditor() {
+        const editor = $("paperEditor");
+        if (!editor || isPaginatingEditor) return;
+
+        isPaginatingEditor = true;
+
+        try {
+            editor.querySelectorAll(".editor-page-break").forEach(node => node.remove());
+
+            const PAGE_CONTENT_HEIGHT = 980;
+            const children = Array.from(editor.children)
+                .filter(node => !node.classList.contains("editor-page-break"));
+
+            let usedHeight = 0;
+            let pages = 1;
+
+            children.forEach(child => {
+                const style = getComputedStyle(child);
+                const marginTop = parseFloat(style.marginTop) || 0;
+                const marginBottom = parseFloat(style.marginBottom) || 0;
+                const height = Math.max(
+                    child.getBoundingClientRect().height + marginTop + marginBottom,
+                    1
+                );
+
+                if (usedHeight > 0 && usedHeight + height > PAGE_CONTENT_HEIGHT) {
+                    pages += 1;
+
+                    const separator = document.createElement("div");
+                    separator.className = "editor-page-break";
+                    separator.setAttribute("contenteditable", "false");
+                    separator.setAttribute("aria-hidden", "true");
+                    separator.dataset.page = String(pages);
+
+                    editor.insertBefore(separator, child);
+                    usedHeight = height;
+                } else {
+                    usedHeight += height;
+                }
+            });
+
+            const pageCount = $("pageCount");
+            if (pageCount) {
+                pageCount.textContent = `Página 1 de ${pages}`;
+            }
+        } finally {
+            isPaginatingEditor = false;
+        }
+    }
+
+    const editorEl = $("paperEditor");
+
+    editorEl?.addEventListener("input", () => {
+        scheduleEditorPagination();
+    });
+
+    document.querySelector(".editor-toolbar")?.addEventListener("click", () => {
+        scheduleEditorPagination(120);
+    });
+
+    document.querySelector(".editor-toolbar")?.addEventListener("change", () => {
+        scheduleEditorPagination(120);
+    });
+
+    document.addEventListener("click", event => {
+        if (event.target.closest(".btn-template")) {
+            setTimeout(() => scheduleEditorPagination(0), 0);
+        }
+    });
+
+    window.addEventListener("resize", () => {
+        scheduleEditorPagination(120);
+    });
+
+    scheduleEditorPagination(0);
+
+    async function saveMinuta() {
+        const idProcesso = Number($("selectMinutaProcesso")?.value);
+        const idCategoria = Number($("selectMinutaCategoria")?.value);
+        const nome = $("docTitle")?.value.trim();
+        const conteudo = getEditorCleanHtml();
+
+        if (!idProcesso || !idCategoria || !nome) {
+            return alertModal(
+                "Vinculação necessária",
+                "Selecione o processo, a categoria e informe o nome da minuta."
+            );
+        }
+
+        const payload = {
+            nome,
+            conteudo,
+            tipoArquivo: "text/html",
+            tamanhoArquivo: new Blob([conteudo]).size,
+            processoId: idProcesso,
+            categoriaDocumentoId: idCategoria
+        };
+
+        try {
+            const documento = await saveMinutaSilenciosa();
+            alertModal(
+                "Minuta guardada",
+                `Documento #${documento.idDocumento} salvo com a formatação editável.`
+            );
+        } catch (error) {
+            alertModal("Falha ao salvar minuta", error.message);
+        }
+    }
+
+    async function exportarPdfMinuta() {
+        try {
+            await saveMinutaSilenciosa();
+
+            if (!state.documentoAtualId) {
+                throw new Error("Salve a minuta antes de exportar o PDF.");
+            }
+
+            const response = await fetch(
+                `${API_BASE}/documentos/${state.documentoAtualId}/pdf`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${state.token}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Erro HTTP ${response.status} ao gerar PDF`);
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const nomeBase = ($("docTitle")?.value || "minuta")
+                .trim()
+                .replace(/[^a-zA-Z0-9._-]+/g, "_");
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${nomeBase}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        } catch (error) {
+            alertModal("Falha ao exportar PDF", error.message);
+        }
+    }
+
+    async function saveMinutaSilenciosa() {
+        const idProcesso = Number($("selectMinutaProcesso")?.value);
+        const idCategoria = Number($("selectMinutaCategoria")?.value);
+        const nome = $("docTitle")?.value.trim();
+        const conteudo = getEditorCleanHtml();
+
+        if (!idProcesso || !idCategoria || !nome) {
+            throw new Error(
+                "Selecione processo, categoria e informe o nome da minuta."
+            );
+        }
+
+        const payload = {
+            nome,
+            conteudo,
+            tipoArquivo: "text/html",
+            tamanhoArquivo: new Blob([conteudo]).size,
+            processoId: idProcesso,
+            categoriaDocumentoId: idCategoria
+        };
+
+        const documento = state.documentoAtualId
+            ? await api(`/documentos/${state.documentoAtualId}`, {
+                method: "PUT",
+                body: JSON.stringify(payload)
+            })
+            : await api("/documentos", {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+
+        state.documentoAtualId = documento.idDocumento;
+
+        return documento;
+    }
+
+    // Captura antes do listener antigo que apenas exibia sucesso sem persistir.
+    document.addEventListener("click", (event) => {
+        if (event.target.closest("#btnSalvarMinuta")) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            saveMinuta();
+            return;
+        }
+
+        if (event.target.closest("#btnExportPDF")) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            exportarPdfMinuta();
+            return;
+        }
+
+        if (event.target.closest(".modal-close") ||
+            event.target.closest("#btnFecharDetalhes") ||
+            event.target.closest("#btnFecharDetalhesNotificacao") ||
+            event.target.closest("#btnFecharAlerta")) {
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            closeModals();
+            return;
+        }
+
+        if (event.target.closest("#btnConfirmarSair")) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            void encerrarSessao();
+        }
+    }, true);
+
+    async function loadAll() {
+        const results = await Promise.allSettled([
+            loadPerfil(),
+            loadClientes(),
+            loadProcessos(),
+            loadTarefas(),
+            loadNotificacoes(),
+            loadCategoriasDocumento()
+        ]);
+
+        atualizarHome();
+
+        const unauthorized = results.some(r => r.status === "rejected" && r.reason?.status === 401);
+        if (unauthorized) {
+            clearSession();
+            showAuth("login");
+        }
+    }
+
+    function translateStatus(status) {
+        return ({
+            EM_ANDAMENTO: "Em andamento",
+            SUSPENSO: "Suspenso",
+            ENCERRADO: "Encerrado",
+            AGUARDANDO_DECISAO: "Aguardando decisão"
+        })[status] || status || "Sem classificação";
+    }
+
+    function statusPill(status) {
+        if (!status) return '<span class="status-pill encerrado">Sem classificação</span>';
+        const css = status.toLowerCase().replaceAll("_", "-");
+        return `<span class="status-pill ${css}">${escapeHtml(translateStatus(status))}</span>`;
+    }
+
+    function formatDate(value) {
+        if (!value) return "—";
+        const parts = String(value).split("-");
+        return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+    }
+
+    function detail(label, value) {
+        return `<div class="detail-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value ?? "—")}</strong></div>`;
+    }
+
+    if (state.localAdmin && state.usuario) {
+        saveLocalAdminSession();
+        showApp();
+        hydrateLocalAdminUi();
+    } else if (state.token && state.usuario) {
+        showApp();
+        loadAll();
+    } else {
+        showAuth("login");
+    }
+});
